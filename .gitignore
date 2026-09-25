@@ -1,0 +1,7 @@
+node_modules
+dist
+.swc
+
+# Local development records and generated caches
+.project-data/
+.swc/
