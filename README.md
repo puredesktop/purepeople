@@ -2,9 +2,25 @@
 
 # purepeople
 
-## What purepeople does
+**Keep people, organizations, and relationships together.** An app for [puredesktop](https://puredesktop.ai).
+
+[Get started](#getting-started) · [App guide](docs/app-guide.md) · [Develop](docs/development.md) · [Developer account](https://puredesktop.ai/developers)
+
+## What it does
 
 A contact book that brings together people and organizations from your work across the suite. Curate contact details, merge duplicates, maintain lists, and explore relationships while protecting explicit edits from automatic feed updates.
+
+## Requirements
+
+Use a compatible [puredesktop](https://puredesktop.ai) build for desktop integration, storage, and the app drawer. Developer setup is covered in the [development guide](docs/development.md).
+
+Add contacts manually or import your own CSV records. Cross-app context depends on available host integrations.
+
+## Getting started
+
+1. Add a contact or import contacts using the available import controls.
+2. Review names, addresses, organizations, roles, phone numbers, notes, and tags.
+3. Merge duplicates and correct fields directly. Explicit edits are protected from automatic feed updates, which fill missing information.
 
 ## App layout
 
@@ -17,31 +33,45 @@ A contact book that brings together people and organizations from your work acro
 
 The app also uses the shared [puredesktop](https://puredesktop.ai) shell and drawer agent. Panels can vary with the current view and selection.
 
-## Getting started
+## Working with the agent
 
-1. Add a contact or import contacts using the available import controls.
-2. Review names, addresses, organizations, roles, phone numbers, notes, and tags.
-3. Merge duplicates and correct fields directly. Explicit edits are protected from automatic feed updates, which fill missing information.
+Open the app’s drawer in [puredesktop](https://puredesktop.ai) and describe what you want to do. For example:
 
-Read the [app guide](docs/app-guide.md) for development, loading, and source-layout details.
+> Find contacts at this organization.
+>
+> Show the relationship context for this person.
+
+The app exposes 17 tools, including `listContacts`, `getContact`, `prepareProfilePhotoResearch`. See [agents.md](agents.md) for workflows and [plugin.json](plugin.json) for the complete tool schemas and approval flags. Some actions apply directly, while approval-marked actions ask first. Check the result in the app after a change.
+
+## Files and data
+
+Contact and organization records include addresses, roles, notes, tags, lists, and relationship context. Explicit edits are protected from automatic feed updates.
 
 ## Develop and customize
 
-We welcome **developers and vibecoders alike**. You can add features to purepeople, develop a fork, or create a new app for [puredesktop](https://puredesktop.ai).
+We welcome **developers and vibecoders alike**. Fork purepeople, add a feature, or use what you learn to build a new app.
 
-### Use Claude Code, Codex, or your own tools
+| Develop your way | Workflow |
+| --- | --- |
+| **Claude Code, Codex, or your editor** | Open the app’s source folder, read `README.md`, `plugin.json`, `package.json`, and `agents.md`, then make changes and run the app’s checks. Test inside [puredesktop](https://puredesktop.ai) with matching shared platform packages. |
+| **purefactory** | Choose **Start building** for a new app, or select an available app project to extend it. Use **Open folder** for external tools and **Open app** to test. |
+| **App drawer** | Request a local app change where app-development integration is available. Make clear whether you want to change the app itself or its current document. |
 
-Open a local source checkout or a purefactory project's folder in your preferred coding tool. Ask it to read this README, `plugin.json`, `package.json`, `agents.md`, and the [development guide](docs/development.md) before making changes. Review the changes, run the app's checks, and test it inside [puredesktop](https://puredesktop.ai). This source may require matching shared platform packages; a browser preview alone does not provide desktop services.
+Use **Share** in purefactory to create a `.pureapp` package, then **Settings → System → Install an app → Choose package…** to load it in current builds. Source availability and integration vary by host build.
 
-The [development guide](docs/development.md) explains how to start Claude Code or Codex in the project, work on this repository, and load your app into the desktop.
+Follow the [development guide](docs/development.md) for Claude Code/Codex commands, app-specific setup and checks, and packaging. A standalone browser preview does not provide every desktop service.
 
-### Use purefactory inside the desktop
+## Documentation and limitations
 
-Open **purefactory** (Factory) to describe a new app, or select an available app project and request a feature. Use **Open folder** to continue with external tools and **Open app** to test the result. You can also request a local app change through the app's drawer where app-development integration is available; distinguish changing the app from editing its current document.
+| Guide | What it covers |
+| --- | --- |
+| [App guide](docs/app-guide.md) | App overview, source layout, and usage. |
+| [Development guide](docs/development.md) | External coding tools, purefactory, checks, and installation. |
+| [Agent guide](agents.md) | App-specific agent workflows and constraints. |
 
-Use **Share** in purefactory to create a `.pureapp` package. In current builds, install it through **Settings → System → Install an app → Choose package…**. See the [development guide](docs/development.md#load-and-share-your-app) for the full workflow and version differences.
+Review duplicate matches before merging contacts. Imported and connected records can contain personal information; choose exports and shared context deliberately.
 
-## Developer accounts and the marketplace
+## Contributing and marketplace
 
 We welcome **developers and vibecoders alike**. Go to [puredesktop.ai](https://puredesktop.ai) and [create a developer account](https://puredesktop.ai/developers) to join the developer community and submit your app for review.
 
@@ -49,13 +79,11 @@ Bring improvements to this app, develop a fork, or build something entirely new.
 
 For developer access, app submissions, or marketplace questions, contact [info@puredesktop.ai](mailto:info@puredesktop.ai).
 
-## Open source and contributions
+Anyone may use, study, modify, and share this app under its applicable licenses. We welcome pull requests, bug reports, and documentation improvements. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Credits and license
 
 Manage contacts and people in [puredesktop](https://puredesktop.ai).
-
-Anyone may use, study, modify, and share this software under the applicable licenses.
-We welcome pull requests, bug reports, documentation improvements, and new ideas.
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to contribute.
 
 ### License
 
