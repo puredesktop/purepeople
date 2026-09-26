@@ -68,6 +68,7 @@ Follow the [development guide](docs/development.md) for Claude Code/Codex comman
 | [App guide](docs/app-guide.md) | App overview, source layout, and usage. |
 | [Development guide](docs/development.md) | External coding tools, purefactory, checks, and installation. |
 | [Agent guide](agents.md) | App-specific agent workflows and constraints. |
+| [Agent contribution skill](.agents/skills/contribute-purepeople/SKILL.md) | Clone or fork, implement and check changes, open PRs, create issues, and comment. |
 
 Review duplicate matches before merging contacts. Imported and connected records can contain personal information; choose exports and shared context deliberately.
 
@@ -80,6 +81,14 @@ Bring improvements to this app, develop a fork, or build something entirely new.
 For developer access, app submissions, or marketplace questions, contact [info@puredesktop.ai](mailto:info@puredesktop.ai).
 
 Anyone may use, study, modify, and share this app under its applicable licenses. We welcome pull requests, bug reports, and documentation improvements. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Contribute with a coding agent
+
+Give your agent the [contribution skill](.agents/skills/contribute-purepeople/SKILL.md) and describe the change, issue, or comment you want it to make. Codex can discover it in `.agents/skills/contribute-purepeople/`; with Claude Code or another tool, ask it to read that `SKILL.md` explicitly. For example:
+
+> Read `.agents/skills/contribute-purepeople/SKILL.md`, implement [describe the change], run the relevant checks, and open a pull request to `puredesktop/purepeople` from my fork.
+
+The skill includes app-specific checks and workflows for PRs, issues, and comments. Anyone with a GitHub account can contribute; merging is reserved for `esetera` and `MRdevTagg`.
 
 ## Credits and license
 
