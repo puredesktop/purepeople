@@ -1,0 +1,9 @@
+[
+  {
+    "id": "bd0a4bd3-e73e-447f-bcdd-06d3c08e73e1",
+    "title": "Existing app baseline",
+    "scope": "app",
+    "status": "done",
+    "details": "Existing app source at commit c4a9280d3140b0921f6895a24022b76245339587."
+  }
+]
