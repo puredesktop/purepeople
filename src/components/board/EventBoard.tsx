@@ -165,6 +165,7 @@ function PersonDrawer({ person: p, store, boardKey, boardIds, ties, onStar, onSa
 }): React.ReactElement {
   const prep = prepFor(p, boardKey)
   const [note, setNote] = useState(prep?.note ?? '')
+  const [copyStatus, setCopyStatus] = useState<string | null>(null)
   const editing = useRef(false)
   useEffect(() => { if (!editing.current) setNote(prep?.note ?? '') }, [prep?.note])
   const connections = tiesFor(store, p.id, ties)
@@ -184,7 +185,11 @@ function PersonDrawer({ person: p, store, boardKey, boardIds, ties, onStar, onSa
       <DrawerBody>
         <Section>
           {p.emails.map(email => <a key={email} href={`mailto:${email}`} onClick={event => { event.preventDefault(); onEmail() }}>{email}</a>)}
-          {p.phones?.map(phone => <span key={phone}>{phone}</span>)}
+          {p.phones?.map((phone, index) => <span className="phone" key={`${phone}-${index}`}>
+            {phone}
+            <button type="button" aria-label={`Copy phone number ${phone}`} onClick={async () => setCopyStatus(await copyText(phone) ? `Copied ${phone}` : `Could not copy ${phone}`)}>Copy</button>
+          </span>)}
+          {copyStatus ? <Muted role="status">{copyStatus}</Muted> : null}
           {p.links?.length ? <div className="pills">{p.links.map(link => <a key={link.url} className="pill" href={link.url} target="_blank" rel="noreferrer">{link.label || new URL(link.url, 'https://x').hostname}</a>)}</div> : null}
         </Section>
         <Section>
@@ -364,6 +369,9 @@ const DrawerHead = styled.div`
 const DrawerBody = styled.div` flex: 1; min-height: 0; overflow: auto; padding: 12px 20px; display: flex; flex-direction: column; gap: 14px; `
 const Section = styled.div`
   display: flex; flex-direction: column; gap: 6px; font-size: 13px;
+  .phone { display: flex; align-items: center; gap: 8px; }
+  .phone button { border: 0; padding: 2px 4px; background: transparent; color: var(--pp-muted); font: inherit; font-size: 12px; cursor: pointer; }
+  .phone button:hover, .phone button:focus-visible { color: var(--pp-accent); text-decoration: underline; }
   .pills { display: flex; gap: 6px; flex-wrap: wrap; }
   .pill { padding: 3px 9px; border-radius: 999px; background: var(--pp-chip); font-size: 12px; color: var(--pp-chip-text); }
   .pill.quiet { background: none; border: 1px solid var(--pp-line); }

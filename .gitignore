@@ -5,3 +5,6 @@ dist
 # Local development records and generated caches
 .project-data/
 .swc/
+
+!/.project-data/
+!/.project-data/**
