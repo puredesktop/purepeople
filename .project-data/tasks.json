@@ -4,6 +4,7 @@
     "title": "Existing app baseline",
     "scope": "app",
     "status": "done",
-    "details": "Existing app source at commit c4a9280d3140b0921f6895a24022b76245339587."
+    "details": "Existing app source at commit c4a9280d3140b0921f6895a24022b76245339587.",
+    "commitHash": "e69e1473aaa7c2836a9ce579d1f677db20fbdb05"
   }
 ]
