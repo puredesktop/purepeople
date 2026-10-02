@@ -8,5 +8,17 @@
       "bd0a4bd3-e73e-447f-bcdd-06d3c08e73e1"
     ],
     "title": "Existing app baseline"
+  },
+  {
+    "createdAt": "2026-10-02T19:54:11.160Z",
+    "id": "41166270-81d1-464f-b1ea-74aa9889ba3e",
+    "origin": "factory",
+    "request": "Implement this contribution in the current app version. Follow the repository instructions and keep changes focused.\n\n#1 Copy a phone number\nhttps://github.com/puredesktop/purepeople/issues/1\n\n## Good first contributions\n\n1. **Copy a phone number.** Provide a copy control for each displayed phone number without changing the stored international format.\n   <!-- contribution: {\"id\": \"phone-number-copy-action\", \"size\": \"small\", \"goodFirstIssue\": true, \"guide\": \"docs/contributions/phone-number-copy-",
+    "taskIds": [
+      "41166270-81d1-464f-b1ea-74aa9889ba3e"
+    ],
+    "title": "Copy a phone number",
+    "devSessionId": "7f1c38a4-9932-4f0d-bff3-69d83d3b8107",
+    "devRequestId": "41166270-81d1-464f-b1ea-74aa9889ba3e"
   }
 ]

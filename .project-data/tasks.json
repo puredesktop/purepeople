@@ -6,5 +6,14 @@
     "status": "done",
     "details": "Existing app source at commit c4a9280d3140b0921f6895a24022b76245339587.",
     "commitHash": "e69e1473aaa7c2836a9ce579d1f677db20fbdb05"
+  },
+  {
+    "id": "41166270-81d1-464f-b1ea-74aa9889ba3e",
+    "title": "Copy a phone number",
+    "details": "Implement this contribution in the current app version. Follow the repository instructions and keep changes focused.\n\n#1 Copy a phone number\nhttps://github.com/puredesktop/purepeople/issues/1\n\n## Good first contributions\n\n1. **Copy a phone number.** Provide a copy control for each displayed phone number without changing the stored international format.\n   <!-- contribution: {\"id\": \"phone-number-copy-action\", \"size\": \"small\", \"goodFirstIssue\": true, \"guide\": \"docs/contributions/phone-number-copy-action.md\"} -->\n   [Small · Good first contribution · Implementation brief](https://github.com/puredesktop/purepeople/blob/main/docs/contributions/phone-number-copy-action.md)\n\n## Scope\n\nKeep a contact book with people, organisations, lists and relationship context; preserve explicit edits over automatic feed updates.\n\nSize describes scope, not a promised completion time: **Small** = one focused interface change; **Medium** = coordinated interface/state work; **Large** = a feature across several flows, storage or export paths. All items are proposals, not claims that existing features are absent. Check the current code and extend what is there. Maintainers review code and tests before merging. Attribution is your choice.\n\n<!-- puredesktop-roadmap:phone-number-copy-action -->",
+    "scope": "app",
+    "status": "running",
+    "devSessionId": "7f1c38a4-9932-4f0d-bff3-69d83d3b8107",
+    "devRequestId": "41166270-81d1-464f-b1ea-74aa9889ba3e"
   }
 ]

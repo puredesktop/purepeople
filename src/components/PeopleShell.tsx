@@ -65,6 +65,7 @@ import {
 import {
   askDrawer,
   clearOpenRecordContext,
+  copyText,
   isStandaloneDevMode,
   publishOpenRecordContext,
   requestMailCompose,
@@ -311,14 +312,17 @@ function ListEditor({
   empty,
   addLabel,
   inline,
+  copyable = false,
   onChange,
 }: {
   items: string[]
   empty: string
   addLabel: string
   inline?: boolean
+  copyable?: boolean
   onChange: (items: string[]) => void
 }): React.ReactElement {
+  const [copyStatus, setCopyStatus] = useState<string | null>(null)
   if (items.length === 0) {
     return (
       <Inline
@@ -346,6 +350,18 @@ function ListEditor({
               onChange(next)
             }}
           />
+          {copyable ? (
+            <CopyPhoneButton
+              type="button"
+              aria-label={`Copy phone number ${item}`}
+              onClick={async () => {
+                const copied = await copyText(item)
+                setCopyStatus(copied ? `Copied ${item}` : `Could not copy ${item}`)
+              }}
+            >
+              Copy
+            </CopyPhoneButton>
+          ) : null}
         </LinkLine>
       ))}
       <Inline
@@ -356,6 +372,7 @@ function ListEditor({
           if (value.trim()) onChange([...items, value.trim()])
         }}
       />
+      {copyStatus ? <span role="status">{copyStatus}</span> : null}
     </ColumnOrRow>
   )
 }
@@ -2041,6 +2058,7 @@ export function PeopleShell({
                         items={selectedOrg.phones ?? []}
                         empty="Add a number"
                         addLabel="+ add phone"
+                        copyable
                         onChange={items => editOrgList('phones', items)}
                       />
                     </FieldRow>
@@ -2255,6 +2273,7 @@ export function PeopleShell({
                       items={selected.phones ?? []}
                       empty="Add a number"
                       addLabel="+ add phone"
+                      copyable
                       onChange={items => editList('phones', items)}
                     />
                   </FieldRow>
@@ -3171,6 +3190,21 @@ const LinkLine = styled.div`
 
   a {
     font-size: 14.5px;
+  }
+`
+
+const CopyPhoneButton = styled.button`
+  border: 0;
+  padding: 2px 4px;
+  background: transparent;
+  color: var(--pp-muted);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+
+  &:hover, &:focus-visible {
+    color: var(--pp-accent);
+    text-decoration: underline;
   }
 `
 
