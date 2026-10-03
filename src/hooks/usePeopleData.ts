@@ -72,13 +72,15 @@ export function usePeopleData(appId: string) {
   // Written by other apps (PureMail threads, calendar meetings); People only reads them.
   const encounters = useData<EncounterRecord>(appId, 'encounters')
   // The domain functions keep their in-memory view; only individual values persist.
+  // A feed/encounter update must not invalidate the unchanged contact rail.
+  const contactValues = useMemo(() => contacts.records.map(record => record.value).filter(isContactRecord), [contacts.records])
+  const orgValues = useMemo(() => orgs.records.map(record => record.value).filter(isOrgRecord), [orgs.records])
+  const listValues = useMemo(() => lists.records.map(record => record.value).filter(isPeopleList), [lists.records])
+  const encounterValues = useMemo(() => encounters.records.map(record => record.value).filter(isEncounterRecord), [encounters.records])
   const store = useMemo<PeopleStore>(() => ({
     ...emptyPeopleStore(),
-    contacts: contacts.records.map(record => record.value).filter(isContactRecord),
-    orgs: orgs.records.map(record => record.value).filter(isOrgRecord),
-    lists: lists.records.map(record => record.value).filter(isPeopleList),
-    encounters: encounters.records.map(record => record.value).filter(isEncounterRecord),
-  }), [contacts.records, orgs.records, lists.records, encounters.records])
+    contacts: contactValues, orgs: orgValues, lists: listValues, encounters: encounterValues,
+  }), [contactValues, orgValues, listValues, encounterValues])
   const current = useRef(store)
   const rendered = useRef(store)
   if (rendered.current !== store) {

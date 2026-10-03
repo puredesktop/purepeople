@@ -1,14 +1,12 @@
 import { CrossAppDragHandle } from '@purescience/platform-ui/components/assets/CrossAppDragHandle'
 import { useContactMerge } from '../hooks/useContactMerge'
 import { MergePerson } from './people/MergePerson'
-import { EventBoard } from './board/EventBoard'
 import { getEventBoardHandler, getPersonNetworkHandler, setEventPrepHandler } from '../agents/eventTools'
-import { NetworkView } from './board/NetworkView'
 import { scopeTitle, type BoardScope } from '../lib/eventBoard'
 import { RetainedDetails } from './people/RetainedDetails'
 import { Action } from './common/RecordControls'
 import { editRetainedDetail } from '../lib/contactDetails'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { createGlobalStyle, styled } from 'styled-components'
 import { usePlatformAgentTools } from '@purescience/platform-ui/bridge/react/usePlatformAgentTools'
 import {
@@ -56,6 +54,7 @@ import {
   orgByIdOrName,
   orgForContact,
   orgKey,
+  organisationRollups,
   peopleForOrg,
   removeOrg,
   searchOrgs,
@@ -89,6 +88,9 @@ import type {
   PeopleStore,
   PeopleUpdate,
 } from '../types'
+
+const EventBoard = lazy(() => import('./board/EventBoard').then(module => ({ default: module.EventBoard })))
+const NetworkView = lazy(() => import('./board/NetworkView').then(module => ({ default: module.NetworkView })))
 
 /** Staleness threshold for the "not seen" list partition. */
 const STALE_MONTHS = 6
@@ -537,7 +539,7 @@ export function PeopleShell({
       )
     else list.sort((a, b) => b.lastSeenAt.localeCompare(a.lastSeenAt))
     return list
-  }, [store, query, sort, activeListId])
+  }, [store.contacts, query, sort, activeListId])
   const stalePartition = useMemo(() => {
     if (sort !== 'lastSeen') return { recent: peopleMatches, stale: [] }
     const cutoff = now - STALE_MONTHS * 30 * 86_400_000
@@ -553,20 +555,10 @@ export function PeopleShell({
   }, [peopleMatches, sort])
   // Org last-seen rolls up from its people (max), so a stale org is
   // visible in the list without opening it.
-  const orgRollups = useMemo(() => {
-    const lastSeen = new Map<string, string>()
-    const counts = new Map<string, number>()
-    for (const org of storeOrgs(store)) {
-      const people = peopleForOrg(store, org)
-      counts.set(org.id, people.length)
-      let last = org.lastSeenAt
-      for (const person of people) {
-        if (person.lastSeenAt > last) last = person.lastSeenAt
-      }
-      lastSeen.set(org.id, last)
-    }
-    return { lastSeen, counts }
-  }, [store])
+  const orgRollups = useMemo(
+    () => organisationRollups(store.contacts, storeOrgs(store)),
+    [store.contacts, store.orgs],
+  )
   const orgMatches = useMemo(() => {
     const list = [...searchOrgs(store, query, RAIL_LIMIT)]
     if (sort === 'name' || sort === 'org')
@@ -580,13 +572,13 @@ export function PeopleShell({
         ),
       )
     return list
-  }, [store, query, sort, orgRollups])
+  }, [store.orgs, query, sort, orgRollups])
   // Search spans both tabs; with a query, the OTHER tab's matches are
   // appended as labelled rows — the tabs are a filter, not a boundary.
   const hasQuery = query.trim().length > 0
 
   const lists = storeLists(store)
-  const counts = useMemo(() => listCounts(store), [store])
+  const counts = useMemo(() => listCounts(store), [store.contacts, store.lists])
   const activeList = activeListId
     ? lists.find(list => list.id === activeListId) ?? null
     : null
@@ -2423,6 +2415,7 @@ export function PeopleShell({
           event.currentTarget.value = ''
         }}
       />
+      <Suspense fallback={<ImportPanel role="status">Opening view…</ImportPanel>}>
       {board ? (
         <EventBoard
           store={store}
@@ -2444,6 +2437,7 @@ export function PeopleShell({
           onOpenProfile={contactId => { setBoard(null); setTab('people'); setSelectedOrgId(null); setSelectedId(contactId) }}
         />
       ) : null}
+      </Suspense>
     </Root>
   )
 }
@@ -2711,6 +2705,9 @@ const RailList = styled.div`
 
 /** One person or org in the rail: a platform list row, two lines tall. */
 const RailRow = styled.div.attrs(chrome('list-row'))<{ $active?: boolean }>`
+  /* Keep every row searchable while deferring layout below the viewport. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 46px;
   cursor: pointer;
   transition: background 120ms ease;
 

@@ -364,3 +364,15 @@ it('validates against queued state and cannot delete before the survivor save fi
     expect((await merge).title).toBe('Earlier edit')
   })
 })
+
+it('keeps unchanged collections stable when one contact is saved', async () => {
+  await mount()
+  const before = latest!.store
+  await act(async () => {
+    await latest!.update(store => upsertContact(store, { email: 'stable@example.org', name: 'Stable' }, 'user').store)
+  })
+  expect(latest!.store.contacts).not.toBe(before.contacts)
+  expect(latest!.store.orgs).toBe(before.orgs)
+  expect(latest!.store.lists).toBe(before.lists)
+  expect(latest!.store.encounters).toBe(before.encounters)
+})
