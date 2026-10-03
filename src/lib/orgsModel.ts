@@ -351,3 +351,36 @@ export function orgForContact(
 ): OrgRecord | undefined {
   return storeOrgs(store).find(org => contactMatchesOrg(contact, org))
 }
+
+/** Build organisation counts/recency without rescanning every contact per org. */
+export function organisationRollups(contacts: ContactRecord[], orgs: OrgRecord[]) {
+  const byName = new Map<string, Set<OrgRecord>>()
+  const byDomain = new Map<string, Set<OrgRecord>>()
+  const counts = new Map<string, number>()
+  const lastSeen = new Map<string, string>()
+  const index = (map: Map<string, Set<OrgRecord>>, key: string, org: OrgRecord) => {
+    const matches = map.get(key) ?? new Set<OrgRecord>()
+    matches.add(org)
+    map.set(key, matches)
+  }
+  for (const org of orgs) {
+    counts.set(org.id, 0)
+    lastSeen.set(org.id, org.lastSeenAt)
+    for (const key of [org.id, orgKey(org.name), ...(org.aliases ?? []).map(orgKey)]) index(byName, key, org)
+    for (const domain of org.domains ?? []) index(byDomain, domain, org)
+  }
+  for (const contact of contacts) {
+    const matched = new Set<OrgRecord>()
+    for (const name of [contact.org ?? '', ...(contact.alternatives?.org ?? [])]) {
+      for (const org of byName.get(orgKey(name)) ?? []) matched.add(org)
+    }
+    for (const email of contact.emails) {
+      for (const org of byDomain.get(normalizeEmail(email).split('@')[1] ?? '') ?? []) matched.add(org)
+    }
+    for (const org of matched) {
+      counts.set(org.id, counts.get(org.id)! + 1)
+      if (contact.lastSeenAt > lastSeen.get(org.id)!) lastSeen.set(org.id, contact.lastSeenAt)
+    }
+  }
+  return { counts, lastSeen }
+}
