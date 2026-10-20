@@ -1,5 +1,5 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../.packages/tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
@@ -10,8 +10,8 @@
     "isolatedModules": true,
     "baseUrl": ".",
     "paths": {
-      "@purescience/platform-ui": ["../../packages/ui/src/index.ts"],
-      "@purescience/platform-ui/*": ["../../packages/ui/src/*"]
+      "@purescience/platform-ui": ["./node_modules/@purescience/platform-ui/src/index.ts"],
+      "@purescience/platform-ui/*": ["./node_modules/@purescience/platform-ui/src/*"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.tsx", "vite-env.d.ts"]

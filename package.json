@@ -10,21 +10,29 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@purescience/platform-ui": "file:../../packages/ui",
+    "@purescience/platform-ui": "file:../.packages/ui",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "styled-components": "^6.1.18",
-    "@purescience/platform-bridge": "file:../../packages/bridge"
+    "@purescience/platform-bridge": "file:../.packages/bridge",
+    "@purescience/platform-editor": "file:../.packages/editor"
   },
   "devDependencies": {
-    "@swc/plugin-styled-components": "^12.9.0",
+    "@swc/plugin-styled-components": "12.12.1",
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.5",
     "@vitejs/plugin-react-swc": "^3.10.2",
     "happy-dom": "^17.4.4",
     "typescript": "^5.8.3",
     "vite": "^6.3.5",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "@types/diff": "^7.0.0",
+    "@types/turndown": "^5.0.5",
+    "@types/node": "^22.15.21"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "overrides": {
+    "@swc/core": "1.15.40",
+    "@swc/plugin-styled-components": "12.12.1"
+  }
 }
