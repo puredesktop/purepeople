@@ -1740,7 +1740,7 @@ export function PeopleShell({
         </RailList>
       </Rail>
 
-      <Detail>
+      <Detail data-agent-ref="@open" data-agent-label={(tab === 'orgs' ? selectedOrg?.name : selected?.name) || 'People'}>
         {tab === 'orgs' ? (
           selectedOrg ? (
             <>
