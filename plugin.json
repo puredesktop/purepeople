@@ -185,7 +185,7 @@
           "name": "mergeContacts",
           "risk": "destructive",
           "requiresApproval": true,
-          "description": "Consolidate two existing people by stable ID. Keeps survivor identity and primary values, retaining differing details as alternatives. Saves the full survivor before deleting the absorbed record. Retrying the same IDs safely resumes an interrupted merge.",
+          "description": "Consolidate two existing people by stable ID. Keeps survivor identity and primary values, retaining differing details as alternatives. Saves the full survivor before deleting the absorbed record. Retrying the same IDs safely resumes an interrupted merge. Replies with the survivor's summary (id, name, emails, set fields, alternatives, lists, hasNotes) and absorbedId; call getContact for the full record.",
           "inputSchema": {
             "type": "object",
             "properties": {

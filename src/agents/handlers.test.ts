@@ -121,3 +121,18 @@ it('merges current records and returns retained alternatives without uploaded by
   expect(parse(result).saved.hasAvatar).toBe(true)
   expect(context.current().contacts).toHaveLength(1)
 })
+
+it('replies to a merge with the survivor summary, not notes or event prep', async () => {
+  const context = makeContext()
+  const longNotes = 'Long background note. '.repeat(200)
+  await upsertContactHandler(context, { email: 'taylor@organization.example', notes: longNotes })
+  await upsertContactHandler(context, { email: 'other@x', name: 'Other', notes: 'Other note', lists: ['Conference'] })
+  const result = await mergeContactsHandler(context, { survivorId: 'taylor@organization.example', absorbedId: 'other@x' })
+  const reply = parse(result)
+  expect(result.content).not.toContain('Long background note')
+  expect(reply.saved).toMatchObject({ id: 'taylor@organization.example', hasNotes: true, lists: ['Conference'] })
+  expect(reply.saved.emails).toContain('other@x')
+  expect(reply.absorbedId).toBe('other@x')
+  expect(reply.saved.prep).toBeUndefined()
+  expect(result.content.length).toBeLessThan(2000)
+})

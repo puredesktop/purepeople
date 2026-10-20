@@ -558,6 +558,20 @@ export async function mergeContactsHandler(
   if (!survivorId || !absorbedId || survivorId === absorbedId) {
     throw new AgentPeopleToolError('Choose two distinct existing contact IDs: survivorId and absorbedId.')
   }
-  const saved = await mergeContacts(context.setStore, survivorId, absorbedId)
-  return ok({ saved: agentRecordView(saved), note: 'Merged successfully. Differing values remain in alternatives.' })
+  let after = context.store
+  const saved = await mergeContacts(async updater => {
+    after = await context.setStore(updater)
+    return after
+  }, survivorId, absorbedId)
+  // The survivor's summary, not the full record: notes and per-board prep
+  // grow with use and are one getContact away.
+  return ok({
+    saved: {
+      ...summary(saved),
+      lists: listsForContact(after, saved).map(item => item.name),
+      ...(saved.notes?.trim() ? { hasNotes: true } : {}),
+    },
+    absorbedId,
+    note: 'Merged successfully. Differing values remain in alternatives. Call getContact for the full record.',
+  })
 }
