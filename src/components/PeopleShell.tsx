@@ -4,6 +4,7 @@ import { MergePerson } from './people/MergePerson'
 import { getEventBoardHandler, getPersonNetworkHandler, setEventPrepHandler } from '../agents/eventTools'
 import { scopeTitle, type BoardScope } from '../lib/eventBoard'
 import { RetainedDetails } from './people/RetainedDetails'
+import { contactAgentRefs, listAgentRefs, orgAgentRefs } from '../lib/agentRefs'
 import { Action } from './common/RecordControls'
 import { editRetainedDetail } from '../lib/contactDetails'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
@@ -1360,6 +1361,7 @@ export function PeopleShell({
             {lists.map(list => (
               <ListChip
                 key={list.id}
+                {...listAgentRefs(list)}
                 $active={activeListId === list.id}
                 title={list.name}
                 onClick={() =>
@@ -1593,6 +1595,7 @@ export function PeopleShell({
               {stalePartition.recent.map(contact => (
                 <RailRow
                   key={contact.id}
+                  {...contactAgentRefs(contact)}
                   $active={selected?.id === contact.id}
                   onClick={() => {
                     setSelectedId(contact.id)
@@ -1621,6 +1624,7 @@ export function PeopleShell({
               {stalePartition.stale.map(contact => (
                 <RailRow
                   key={contact.id}
+                  {...contactAgentRefs(contact)}
                   $active={selected?.id === contact.id}
                   onClick={() => {
                     setSelectedId(contact.id)
@@ -1657,7 +1661,7 @@ export function PeopleShell({
                     <Rule />
                   </StaleHeader>
                   {orgMatches.map(org => (
-                    <RailRow key={`x-${org.id}`} onClick={() => openOrg(org.id)}>
+                    <RailRow key={`x-${org.id}`} {...orgAgentRefs(org)} onClick={() => openOrg(org.id)}>
                       <RailRowText>
                         <RailRowName>{org.name}</RailRowName>
                         <RailRowSub>
@@ -1677,6 +1681,7 @@ export function PeopleShell({
               {orgMatches.map(org => (
                 <RailRow
                   key={org.id}
+                  {...orgAgentRefs(org)}
                   $active={selectedOrg?.id === org.id}
                   onClick={() => {
                     setSelectedOrgId(org.id)
@@ -1718,6 +1723,7 @@ export function PeopleShell({
                   {peopleMatches.map(contact => (
                     <RailRow
                       key={`x-${contact.id}`}
+                      {...contactAgentRefs(contact)}
                       onClick={() => openPerson(contact.id)}
                     >
                       <RailRowText>
@@ -1738,7 +1744,7 @@ export function PeopleShell({
         {tab === 'orgs' ? (
           selectedOrg ? (
             <>
-              <DetailScroll>
+              <DetailScroll {...orgAgentRefs(selectedOrg)}>
                 <Measure $wide>
                   {navStack.length > 0 && (
                     <BackLink role="button" onClick={goBack}>
@@ -1816,6 +1822,7 @@ export function PeopleShell({
                         {orgPeople.map(person => (
                           <PersonNavRow
                             key={person.id}
+                            {...contactAgentRefs(person)}
                             onClick={() => openPerson(person.id, true)}
                           >
                             <MiniAvatar>
@@ -2113,7 +2120,7 @@ export function PeopleShell({
           )
         ) : selected ? (
           <>
-            <DetailScroll>
+            <DetailScroll {...contactAgentRefs(selected)}>
               <Measure>
                 {navStack.length > 0 && (
                   <BackLink role="button" onClick={goBack}>

@@ -5,6 +5,8 @@ import { allTies, tieLabel, tiesFor } from '../../lib/network'
 import { askDrawer, copyText, requestMailCompose } from '../../lib/peopleBridge'
 import type { ContactRecord, PeopleStore, PeopleUpdate } from '../../types'
 import { Face } from './Face'
+import { contactAgentRefs, listAgentRefs, searchBoardAgentRefs } from '../../lib/agentRefs'
+import { listByIdOrName } from '../../lib/peopleLists'
 
 type Filter = 'all' | 'meet' | 'new' | 'known' | 'met'
 const FILTERS: { id: Filter; label: string }[] = [
@@ -65,6 +67,8 @@ export function EventBoard({ store, scope, update, hidden = false, onClose, onOp
   const save = (contactId: string, patch: Parameters<typeof setPrep>[3]) => { void update(current => setPrep(current, contactId, key, patch)).catch(error => setStatus(error instanceof Error ? error.message : String(error))) }
   const toggleMeet = (p: ContactRecord) => save(p.id, { meet: !prepFor(p, key)?.meet })
   const title = scopeTitle(store, scope)
+  const boardList = scope.kind === 'list' ? listByIdOrName(store, scope.listId) : undefined
+  const boardRefs = boardList ? listAgentRefs(boardList) : scope.kind === 'search' ? searchBoardAgentRefs(scope.query.trim(), title) : undefined
   const brief = async () => {
     const names = (toMeet.length ? toMeet : everyone.slice(0, 12)).map(p => p.name).join(', ')
     const handed = await askDrawer(`In PurePeople, I am preparing for ${title}. Read the event board with getEventBoard (${scope.kind === 'list' ? `list "${title}"` : `search ${title}`}) and brief me on ${toMeet.length ? 'the people I want to meet' : 'who I should meet'}: ${names}. For each, say how I know them, who they are connected to on the board (getPersonNetwork), and one thing worth raising, only from what PurePeople and my mail record. Suggest others on the board worth meeting and say why.`)
@@ -74,7 +78,7 @@ export function EventBoard({ store, scope, update, hidden = false, onClose, onOp
 
   return (
     <Scrim hidden={hidden} onMouseDown={event => { if (event.target === event.currentTarget) onClose() }}>
-      <Sheet role="dialog" aria-label={`${title} board`}>
+      <Sheet role="dialog" aria-label={`${title} board`} {...boardRefs}>
         <Main>
           <Head>
             <div style={{ minWidth: 0 }}>
@@ -105,7 +109,7 @@ export function EventBoard({ store, scope, update, hidden = false, onClose, onOp
                   {shown.map(p => {
                     const prep = prepFor(p, key), known = acquaintance(p)
                     return (
-                      <Card key={p.id} $selected={selected?.id === p.id}>
+                      <Card key={p.id} {...contactAgentRefs(p)} $selected={selected?.id === p.id}>
                         <Star on={!!prep?.meet} name={p.name} onClick={() => toggleMeet(p)} />
                         <button type="button" className="open" onClick={() => setSelectedId(p.id)} aria-label={`Open ${p.name}`}>
                           <Face contact={p} size={72} />
@@ -124,7 +128,7 @@ export function EventBoard({ store, scope, update, hidden = false, onClose, onOp
                   {shown.map(p => {
                     const prep = prepFor(p, key), known = acquaintance(p)
                     return (
-                      <Row key={p.id} $selected={selected?.id === p.id}>
+                      <Row key={p.id} {...contactAgentRefs(p)} $selected={selected?.id === p.id}>
                         <button type="button" className="open" onClick={() => setSelectedId(p.id)} aria-label={`Open ${p.name}`}>
                           <Face contact={p} size={38} />
                           <span className="who"><span className="name">{p.name}</span><span className="role">{[p.title, p.org].filter(Boolean).join(' · ')}</span></span>
@@ -171,7 +175,7 @@ function PersonDrawer({ person: p, store, boardKey, boardIds, ties, onStar, onSa
   const here = connections.filter(t => boardIds.has(t.contactId))
   const nameOf = (id: string) => store.contacts.find(c => c.id === id)
   return (
-    <Drawer aria-label={`${p.name} details`}>
+    <Drawer aria-label={`${p.name} details`} {...contactAgentRefs(p)}>
       <DrawerHead>
         <Face contact={p} size={60} />
         <div style={{ minWidth: 0, flex: 1 }}>

@@ -4,6 +4,7 @@ import { networkAround, pathTo, tieLabel, tieWeight } from '../../lib/network'
 import { requestMailCompose } from '../../lib/peopleBridge'
 import type { PeopleStore } from '../../types'
 import { Face } from './Face'
+import { contactAgentRefs } from '../../lib/agentRefs'
 
 // Room kept clear around the drawing: half a node's width at the sides, the
 // name and org labels under the lowest node, and the legend.
@@ -105,7 +106,7 @@ export function NetworkView({ store, centerId: initialCenter, scopeIds, scopeLab
               const p = pos.get(n.contact.id)!, size = n.ring === 0 ? 70 : n.ring === 1 ? 48 : 38
               const faded = !!scopeIds && !onlyBoard && !board.has(n.contact.id) && n.ring !== 0
               return (
-                <Node key={n.contact.id} type="button" aria-pressed={n.contact.id === sel.id} aria-label={`${n.contact.name}${n.contact.org ? `, ${n.contact.org}` : ''}`}
+                <Node key={n.contact.id} {...contactAgentRefs(n.contact)} type="button" aria-pressed={n.contact.id === sel.id} aria-label={`${n.contact.name}${n.contact.org ? `, ${n.contact.org}` : ''}`}
                   style={{ left: p.x, top: p.y - size / 2 }} $faded={faded}
                   onClick={() => setSelectedId(n.contact.id)} onDoubleClick={() => { setCenterId(n.contact.id); setSelectedId(n.contact.id) }}>
                   <Face contact={n.contact} size={size} ring={n.contact.id === sel.id} />
@@ -121,7 +122,7 @@ export function NetworkView({ store, centerId: initialCenter, scopeIds, scopeLab
             </Legend>
           </Canvas>
         </Main>
-        <Side aria-label="Connection details">
+        <Side aria-label="Connection details" {...contactAgentRefs(sel)}>
           <SideHead>
             <Face contact={sel} size={54} />
             <div style={{ minWidth: 0 }}>
