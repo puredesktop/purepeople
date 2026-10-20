@@ -252,6 +252,9 @@ Read both records first and use their exact stable IDs, choosing the survivor wh
 identity and primary values the user wants to retain. This requires approval and
 removes the absorbed row only after saving every combined detail. Report the saved
 survivor and retained alternatives; uploaded pictures are flags/counts, never bytes.
+The reply is the survivor's summary (id, name, emails, the fields that are set,
+alternatives, lists, a `hasNotes` flag) plus `absorbedId`, not the full record:
+call `getContact` for notes and event prep.
 On a persistence error do not claim success. After correcting the cause, retry the
 same IDs: pending deletion recovers after restart and never adds counts or notes
 again. Alias-driven `upsertContact` consolidation uses the same recovery path.
