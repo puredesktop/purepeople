@@ -60,11 +60,16 @@ it('opens the deferred board and network while retaining the contact rail', asyn
     await clickText('button', 'QA List1')
     await clickText('[role="button"]', 'Open as board')
     await loaded('QA List board')
+    // The activity layer's tags reach real elements: the list chip, the rail row, the board and its cards.
+    const tagged = (ref: string) => [...host.querySelectorAll('[data-agent-ref]')].filter(el => el.getAttribute('data-agent-ref')!.split(' ').includes(ref))
+    expect(tagged('list:qa-list').map(el => el.tagName)).toEqual(expect.arrayContaining(['BUTTON', 'SECTION']))
+    expect(tagged('contact:qa@example.org').length).toBeGreaterThanOrEqual(3)
     await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="Close board"]')!.click())
     const name = [...host.querySelectorAll('div')].find(el => el.textContent === 'QA Person')!
     await act(async () => name.dispatchEvent(new MouseEvent('click', { bubbles: true })))
     await clickText('[role="button"]', 'Network')
     await loaded("QA Person's network")
+    expect(tagged('qa@example.org').some(el => el.getAttribute('aria-label') === 'Connection details')).toBe(true)
     expect(update).not.toHaveBeenCalled()
   } finally {
     await act(async () => root.unmount())
