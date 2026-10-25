@@ -47,6 +47,15 @@ function isLocked(org: OrgRecord, field: string): boolean {
   return (org.lockedFields ?? []).includes(field)
 }
 
+/** Lowercase, trim, and strip a leading @ so "@Example.com" and "example.com" match. */
+function normalizeDomains(domains: string[] | undefined): string[] | undefined {
+  if (!domains?.length) return undefined
+  const clean = domains
+    .map(domain => domain.trim().toLowerCase().replace(/^@/, ''))
+    .filter(Boolean)
+  return clean.length > 0 ? clean : undefined
+}
+
 function stampSource(
   sources: OrgRecord['sources'],
   app: string,
@@ -130,11 +139,7 @@ export function upsertOrg(
     ...(patch.country !== undefined ? { country: patch.country.trim() } : {}),
     ...(patch.phones !== undefined ? { phones: patch.phones } : {}),
     ...(patch.domains !== undefined
-      ? {
-          domains: patch.domains
-            .map(domain => domain.trim().toLowerCase().replace(/^@/, ''))
-            .filter(Boolean),
-        }
+      ? { domains: normalizeDomains(patch.domains) }
       : {}),
     ...(patch.links !== undefined
       ? { links: normalizeLinks(patch.links) }
@@ -212,7 +217,9 @@ export function mergeOrgImportEntry(
       ...(entry.tags?.length ? { tags: entry.tags } : {}),
       ...(entry.notes?.trim() ? { notes: entry.notes.trim() } : {}),
       ...(entry.aliases?.length ? { aliases: entry.aliases } : {}),
-      ...(entry.domains?.length ? { domains: entry.domains } : {}),
+      ...(normalizeDomains(entry.domains)
+        ? { domains: normalizeDomains(entry.domains) }
+        : {}),
       ...(entry.status?.trim() ? { status: entry.status.trim() } : {}),
       ...(entry.avatarUrl?.trim()
         ? { avatarUrl: entry.avatarUrl.trim() }
@@ -255,7 +262,7 @@ export function mergeOrgImportEntry(
   if (links && !existing.links?.length && !isLocked(existing, 'links')) {
     merged.links = links
   }
-  for (const field of ['tags', 'aliases', 'domains'] as const) {
+  for (const field of ['tags', 'aliases'] as const) {
     const incoming = entry[field]
     if (
       incoming?.length &&
@@ -264,6 +271,14 @@ export function mergeOrgImportEntry(
     ) {
       merged[field] = incoming
     }
+  }
+  const domains = normalizeDomains(entry.domains)
+  if (
+    domains?.length &&
+    !existing.domains?.length &&
+    !isLocked(existing, 'domains')
+  ) {
+    merged.domains = domains
   }
   merged.sources = stampSource(
     existing.sources,
@@ -332,7 +347,9 @@ export function contactMatchesOrg(
   if (org.domains?.length) {
     return contact.emails.some(email => {
       const domain = normalizeEmail(email).split('@')[1] ?? ''
-      return org.domains!.includes(domain)
+      return org.domains!.some(
+        stored => stored.trim().toLowerCase() === domain,
+      )
     })
   }
   return false
@@ -367,7 +384,7 @@ export function organisationRollups(contacts: ContactRecord[], orgs: OrgRecord[]
     counts.set(org.id, 0)
     lastSeen.set(org.id, org.lastSeenAt)
     for (const key of [org.id, orgKey(org.name), ...(org.aliases ?? []).map(orgKey)]) index(byName, key, org)
-    for (const domain of org.domains ?? []) index(byDomain, domain, org)
+    for (const domain of org.domains ?? []) index(byDomain, domain.trim().toLowerCase(), org)
   }
   for (const contact of contacts) {
     const matched = new Set<OrgRecord>()

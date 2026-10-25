@@ -107,4 +107,20 @@ describe('org curation and linking', () => {
       'kim@organization.example',
     ])
   })
+
+  it('normalizes imported domains so mixed-case or @-prefixed domains still link', () => {
+    let store = mergeOrgImportEntry(emptyPeopleStore(), {
+      name: 'ExampleOrg',
+      seenAt: NOW,
+      domains: ['Example.com', '@Other.example'],
+    })
+    store = upsertContact(store, { email: 'kim@example.com' }, 'user').store
+    store = upsertContact(store, { email: 'sam@other.example' }, 'user').store
+    const org = orgByIdOrName(store, 'ExampleOrg')!
+    expect(org.domains).toEqual(['example.com', 'other.example'])
+    expect(peopleForOrg(store, org).map(c => c.id).sort()).toEqual([
+      'kim@example.com',
+      'sam@other.example',
+    ])
+  })
 })

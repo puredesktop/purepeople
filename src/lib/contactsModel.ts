@@ -177,7 +177,10 @@ export function mergeFeedEntry(
     betterName &&
     !isLocked(existing, 'name') &&
     (existing.name.trim() === '' ||
-      normalizeEmail(existing.name) === normalizeEmail(existing.id))
+      normalizeEmail(existing.name) === normalizeEmail(existing.id) ||
+      existing.emails.some(
+        known => normalizeEmail(known) === normalizeEmail(existing.name),
+      ))
   ) {
     merged.name = betterName
   }
