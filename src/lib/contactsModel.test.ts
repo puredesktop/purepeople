@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ContactFeedEntry } from '../types'
+import type { ContactFeedEntry, PeopleStore } from '../types'
 import {
   contactByIdOrEmail,
   emptyPeopleStore,
@@ -62,7 +62,7 @@ describe('feed merging', () => {
   it('upgrades an address-as-name even when the record id is a UUID', () => {
     // A record whose id is not its address (as after a merge or an address
     // rewrite) still shows the address as its name until a feed supplies one.
-    let store = {
+    let store: PeopleStore = {
       ...emptyPeopleStore(),
       contacts: [
         {

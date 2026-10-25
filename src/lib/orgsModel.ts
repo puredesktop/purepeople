@@ -48,11 +48,13 @@ function isLocked(org: OrgRecord, field: string): boolean {
 }
 
 /** Lowercase, trim, and strip a leading @ so "@Example.com" and "example.com" match. */
+export function normalizeDomain(domain: string): string {
+  return domain.trim().toLowerCase().replace(/^@/, '')
+}
+
 function normalizeDomains(domains: string[] | undefined): string[] | undefined {
   if (!domains?.length) return undefined
-  const clean = domains
-    .map(domain => domain.trim().toLowerCase().replace(/^@/, ''))
-    .filter(Boolean)
+  const clean = domains.map(normalizeDomain).filter(Boolean)
   return clean.length > 0 ? clean : undefined
 }
 
@@ -348,7 +350,7 @@ export function contactMatchesOrg(
     return contact.emails.some(email => {
       const domain = normalizeEmail(email).split('@')[1] ?? ''
       return org.domains!.some(
-        stored => stored.trim().toLowerCase() === domain,
+        stored => normalizeDomain(stored) === domain,
       )
     })
   }
@@ -384,7 +386,7 @@ export function organisationRollups(contacts: ContactRecord[], orgs: OrgRecord[]
     counts.set(org.id, 0)
     lastSeen.set(org.id, org.lastSeenAt)
     for (const key of [org.id, orgKey(org.name), ...(org.aliases ?? []).map(orgKey)]) index(byName, key, org)
-    for (const domain of org.domains ?? []) index(byDomain, domain.trim().toLowerCase(), org)
+    for (const domain of org.domains ?? []) index(byDomain, normalizeDomain(domain), org)
   }
   for (const contact of contacts) {
     const matched = new Set<OrgRecord>()
