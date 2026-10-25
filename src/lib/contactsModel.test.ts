@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { ContactFeedEntry } from '../types'
+import type { ContactFeedEntry, PeopleStore } from '../types'
 import {
   contactByIdOrEmail,
   emptyPeopleStore,
@@ -57,6 +57,31 @@ describe('feed merging', () => {
     store = upsertContact(store, { email: 'taylor@organization.example', name: 'Taylor H.' }, 'agent').store
     store = mergeFeedEntry(store, entry({ name: 'Taylor Example-Smith' }))
     expect(store.contacts[0]!.name).toBe('Taylor H.')
+  })
+
+  it('upgrades an address-as-name even when the record id is a UUID', () => {
+    // A record whose id is not its address (as after a merge or an address
+    // rewrite) still shows the address as its name until a feed supplies one.
+    let store: PeopleStore = {
+      ...emptyPeopleStore(),
+      contacts: [
+        {
+          id: 'contact_00000000-0000-4000-8000-000000000000',
+          name: 'b@x.example',
+          emails: ['b@x.example'],
+          sources: [],
+          firstSeenAt: '2026-07-01T10:00:00.000Z',
+          lastSeenAt: '2026-07-01T10:00:00.000Z',
+          seenCount: 1,
+          updatedAt: '2026-07-01T10:00:00.000Z',
+        },
+      ],
+    }
+    store = mergeFeedEntry(store, {
+      id: 'f1', sourceApp: 'mail', seenAt: '2026-07-02T10:00:00.000Z',
+      contact: { email: 'b@x.example', name: 'Bob Example' },
+    })
+    expect(store.contacts.find(c => c.emails.includes('b@x.example'))!.name).toBe('Bob Example')
   })
 
   it('joins aliases onto one record', () => {

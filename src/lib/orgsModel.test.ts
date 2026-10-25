@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
+import type { OrgRecord, PeopleStore } from '../types'
 import { emptyPeopleStore, upsertContact } from './contactsModel'
 import { parseImportCsv, parseOrgsCsv } from './csvImport'
 import {
   mergeOrgImportEntry,
   orgByIdOrName,
+  organisationRollups,
   peopleForOrg,
   upsertOrg,
 } from './orgsModel'
@@ -106,5 +108,39 @@ describe('org curation and linking', () => {
       'taylor@consultant.example',
       'kim@organization.example',
     ])
+  })
+
+  it('normalizes imported domains so mixed-case or @-prefixed domains still link', () => {
+    let store = mergeOrgImportEntry(emptyPeopleStore(), {
+      name: 'ExampleOrg',
+      seenAt: NOW,
+      domains: ['Example.com', '@Other.example'],
+    })
+    store = upsertContact(store, { email: 'kim@example.com' }, 'user').store
+    store = upsertContact(store, { email: 'sam@other.example' }, 'user').store
+    const org = orgByIdOrName(store, 'ExampleOrg')!
+    expect(org.domains).toEqual(['example.com', 'other.example'])
+    expect(peopleForOrg(store, org).map(c => c.id).sort()).toEqual([
+      'kim@example.com',
+      'sam@other.example',
+    ])
+  })
+
+  it('links orgs saved before normalization with an @-prefixed, mixed-case domain', () => {
+    // Stored as-is, the way records written before domains were normalized look.
+    const org: OrgRecord = {
+      id: 'exampleorg',
+      name: 'ExampleOrg',
+      domains: ['@Example.com'],
+      sources: [],
+      firstSeenAt: NOW,
+      lastSeenAt: NOW,
+      seenCount: 1,
+      updatedAt: NOW,
+    }
+    let store: PeopleStore = { ...emptyPeopleStore(), orgs: [org] }
+    store = upsertContact(store, { email: 'kim@example.com' }, 'user').store
+    expect(peopleForOrg(store, org).map(c => c.id)).toEqual(['kim@example.com'])
+    expect(organisationRollups(store.contacts, [org]).counts.get('exampleorg')).toBe(1)
   })
 })

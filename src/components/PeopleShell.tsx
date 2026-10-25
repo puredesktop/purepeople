@@ -52,6 +52,7 @@ import {
 } from '../lib/peopleLists'
 import {
   mergeOrgImportEntry,
+  normalizeDomain,
   orgByIdOrName,
   orgForContact,
   orgKey,
@@ -1068,23 +1069,26 @@ export function PeopleShell({
     setReviewOpen(false)
     setPersonPickerDraft(null)
   }, [selectedOrgId, tab])
-  const domainMatchCount = (domain: string): number =>
-    store.contacts.filter(contact =>
+  const domainMatchCount = (domain: string): number => {
+    const target = normalizeDomain(domain)
+    return store.contacts.filter(contact =>
       contact.emails.some(
-        email => normalizeEmail(email).split('@')[1] === domain,
+        email => normalizeEmail(email).split('@')[1] === target,
       ),
     ).length
+  }
   // "Unlinked match": the domain links this person here, but their own
   // org text says nothing (or something else). Reviewing stamps the org
   // name onto the person, making the link explicit instead of inferred.
   const unlinkedMatches = useMemo(() => {
     if (!selectedOrg?.domains?.length) return []
     return store.contacts.filter(contact => {
-      const domainHit = contact.emails.some(email =>
-        selectedOrg.domains!.includes(
-          normalizeEmail(email).split('@')[1] ?? '',
-        ),
-      )
+      const domainHit = contact.emails.some(email => {
+        const domain = normalizeEmail(email).split('@')[1] ?? ''
+        return selectedOrg.domains!.some(
+          stored => normalizeDomain(stored) === domain,
+        )
+      })
       if (!domainHit) return false
       if (!contact.org?.trim()) return true
       const key = orgKey(contact.org)
@@ -1954,10 +1958,7 @@ export function PeopleShell({
                           empty="+ add domain"
                           size={13.5}
                           onCommit={value => {
-                            const domain = value
-                              .trim()
-                              .toLowerCase()
-                              .replace(/^@/, '')
+                            const domain = normalizeDomain(value)
                             if (!domain) return
                             editOrgList('domains', [
                               ...(selectedOrg.domains ?? []),

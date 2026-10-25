@@ -96,3 +96,16 @@ describe('parseContactsCsv — generic profile', () => {
     expect(kim.seenAt).toBe(NOW)
   })
 })
+
+describe('isoFromDate — create/activity dates', () => {
+  it('keeps timestamps with seconds and date-only values', () => {
+    const result = parseContactsCsv(
+      'Name,Email,Create Date\n' +
+        'Kim,kim@x.example,2020-01-10 10:00:30\n' +
+        'Sam,sam@x.example,2020-01-10\n',
+      NOW,
+    )
+    expect(result.entries[0]!.seenAt).toBe('2020-01-10T10:00:30.000Z')
+    expect(result.entries[1]!.seenAt).toBe('2020-01-10T00:00:00.000Z')
+  })
+})

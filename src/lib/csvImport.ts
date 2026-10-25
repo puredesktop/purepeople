@@ -215,11 +215,18 @@ function firstEmailIn(value: string): string {
 function isoFromDate(value: string): string | null {
   const trimmed = value.trim()
   if (!trimmed) return null
-  const parsed = new Date(
-    /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(trimmed)
-      ? trimmed.replace(' ', 'T') + ':00Z'
-      : trimmed,
+  const dateTime = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2}(?::\d{2})?)$/.exec(
+    trimmed,
   )
+  let parsed: Date
+  if (dateTime) {
+    const date = dateTime[1]!
+    const time = dateTime[2]!
+    const withSeconds = time.split(':').length === 3 ? time : `${time}:00`
+    parsed = new Date(`${date}T${withSeconds}Z`)
+  } else {
+    parsed = new Date(trimmed)
+  }
   return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString()
 }
 
