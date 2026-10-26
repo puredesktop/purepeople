@@ -258,3 +258,37 @@ call `getContact` for notes and event prep.
 On a persistence error do not claim success. After correcting the cause, retry the
 same IDs: pending deletion recovers after restart and never adds counts or notes
 again. Alias-driven `upsertContact` consolidation uses the same recovery path.
+
+## Customers and follow-ups
+
+The **Customers** view tracks an optional `customer` profile on the existing
+contact row, under its stable ID. Contacts are never enrolled automatically.
+The profile's `status` is exactly `Lead`, `Customer`, or `Inactive`; it is
+independent of the older free-text contact `status` used by imports. Its
+`notes` are relationship notes, separate from the contact's rich-text notes.
+`nextAction` is text, and `dueDate` is a real `YYYY-MM-DD` calendar date.
+An empty string clears notes, next action or due date; omitted fields stay as-is.
+
+- `createCustomer {contactId, status, notes?, nextAction?, dueDate?}` starts
+  tracking an **existing** contact. Read `listContacts`/`getContact` first and
+  use its exact ID. For a new person, use `upsertContact` first, then the saved
+  ID; do not make another identity for an existing person. A duplicate profile
+  is refused; use `updateCustomer` instead.
+- `updateCustomer {contactId, status?, notes?, nextAction?, dueDate?}` edits a
+  tracked relationship. At least one field is required. Unknown IDs, invalid
+  statuses and invalid dates are refused before any row is written.
+- `listCustomers {query?, status?, due?, today?}` returns the same contacts and
+  profiles as the customer view. Search matches name, email, organisation,
+  title, tags, relationship notes and next action. Status is `All statuses`
+  (default) or one of the three statuses. Due filters are `All dates` (default),
+  `Overdue`, `Due today`, `Upcoming`, and `No due date`. Undated contacts match
+  only All dates and No due date. `today` optionally fixes the reference date
+  for a briefing; otherwise the local calendar day is used. Results sort by
+  due date, undated last, then name and ID.
+
+Contact consolidation keeps complete conflicting customer profiles in
+`alternatives.customer`; both the customer editor and contact details show these
+retained profiles. A profile from the absorbed contact becomes primary when the
+survivor has none. Editing a consolidated primary preserves its previous profile.
+
+These tools do not send messages, forecast sales, or start campaigns.

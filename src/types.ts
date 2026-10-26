@@ -22,6 +22,8 @@ export interface ContactLink {
 
 /** Conflicting display values retained by consolidation, without a size limit. */
 export interface ContactAlternatives {
+  /** Complete conflicting customer profiles retained when contacts consolidate. */
+  customer?: CustomerProfile[]
   name?: string[]
   org?: string[]
   title?: string[]
@@ -31,7 +33,18 @@ export interface ContactAlternatives {
   notes?: { notes?: string; notesHtml?: string }[]
 }
 
+/** Explicit opt-in customer tracking, independent of imported free-text status. */
+export interface CustomerProfile {
+  status: 'Lead' | 'Customer' | 'Inactive'
+  notes?: string
+  nextAction?: string
+  /** Local calendar date YYYY-MM-DD; empty or omitted means no due date. */
+  dueDate?: string
+}
+
 export interface ContactRecord {
+  customer?: CustomerProfile
+
   /** Durable merge receipts and deletions still to finish; saved with the full survivor. */
   mergeProgress?: { absorbedIds: string[]; pendingIds: string[] }
 

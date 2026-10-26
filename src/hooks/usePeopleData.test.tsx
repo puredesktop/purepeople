@@ -376,3 +376,46 @@ it('keeps unchanged collections stable when one contact is saved', async () => {
   expect(latest!.store.lists).toBe(before.lists)
   expect(latest!.store.encounters).toBe(before.encounters)
 })
+
+it('persists customer transitions and legacy edits as the same contact rows across reloads', async () => {
+  const { saveCustomer, listCustomers } = await import('../lib/customers')
+  const { default: fixture } = await import('../lib/fixtures/legacy-contact.json')
+  const legacy = structuredClone(fixture.contacts[0])
+  seedRow('contacts', legacy.id, legacy)
+  await mount()
+  expect(latest!.store.contacts[0]).toEqual(legacy)
+  expect(listCustomers(latest!.store)).toEqual([])
+  await act(async () => {
+    await latest!.update(store => upsertContact(store, { email: legacy.id, title: 'Senior editor' }, 'user').store)
+  })
+  const edited = structuredClone(latest!.store.contacts[0])
+  const { updatedAt: _updatedAt, ...retained } = edited
+  expect(edited.customer).toBeUndefined()
+  const { updatedAt: _oldUpdatedAt, sources: _oldSources, lockedFields: _oldLocks, ...legacyFields } = legacy
+  expect(edited).toMatchObject({ ...legacyFields, title: 'Senior editor' })
+  expect(edited.sources).toEqual(expect.arrayContaining(legacy.sources))
+  expect(edited.lockedFields).toEqual(expect.arrayContaining([...legacy.lockedFields, 'title']))
+  await act(async () => root!.unmount())
+  root = null
+  await mount()
+  expect(latest!.store.contacts[0]).toEqual(edited)
+  for (const status of ['Lead', 'Customer', 'Inactive']) {
+    await act(async () => {
+      await latest!.update(store => saveCustomer(store, legacy.id, { status, notes: `Relationship ${status}`, nextAction: `Call ${status}`, dueDate: '2026-11-01' }, status === 'Lead' ? 'create' : 'update'))
+    })
+    await act(async () => root!.unmount())
+    root = null
+    await mount()
+    expect(latest!.store.contacts).toHaveLength(1)
+    expect(latest!.store.contacts[0]).toMatchObject({ ...retained, customer: { status, notes: `Relationship ${status}`, nextAction: `Call ${status}`, dueDate: '2026-11-01' } })
+  }
+  const saved = structuredClone([...rows.entries()])
+  for (const [contactId, patch] of [
+    [legacy.id, { status: 'Unknown' }], [legacy.id, { dueDate: '2026-02-30' }], ['missing', { status: 'Lead' }],
+  ] as const) {
+    await act(async () => {
+      await expect(latest!.update(store => saveCustomer(store, contactId, patch, 'update'))).rejects.toThrow()
+    })
+    expect([...rows.entries()]).toEqual(saved)
+  }
+})

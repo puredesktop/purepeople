@@ -1,0 +1,11 @@
+{
+  "storeVersion": 1,
+  "contacts": [{
+    "id": "legacy-stable-id", "name": "Taylor Example", "emails": ["taylor@example.org", "alias@example.org"],
+    "org": "ExampleOrg", "title": "Editor", "status": "In Progress", "notes": "Keep this note", "notesHtml": "<p>Keep this note</p>",
+    "tags": ["collaborator"], "phones": ["+1 555 0100"], "listIds": ["editors"], "lockedFields": ["notes"],
+    "sources": [{"app": "import", "at": "2025-01-01T00:00:00Z"}],
+    "firstSeenAt": "2025-01-01T00:00:00Z", "lastSeenAt": "2025-02-01T00:00:00Z", "updatedAt": "2025-02-01T00:00:00Z", "seenCount": 3
+  }],
+  "updatedAt": "2025-02-01T00:00:00Z"
+}

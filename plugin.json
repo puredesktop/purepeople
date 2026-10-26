@@ -531,6 +531,116 @@
               "contact"
             ]
           }
+        },
+        {
+          "name": "createCustomer",
+          "description": "Start tracking an existing contact; creates only its customer profile, never another person. Use upsertContact first for a new person. Call listContacts/getContact first. Uses the same records and validation as Customers. Imported free-text contact status is separate.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "contactId": {
+                "type": "string",
+                "description": "Exact existing contact ID from listContacts. Never invent an ID."
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "Lead",
+                  "Customer",
+                  "Inactive"
+                ]
+              },
+              "notes": {
+                "type": "string",
+                "description": "Relationship notes; replaces these notes only, separate from contact notes."
+              },
+              "nextAction": {
+                "type": "string"
+              },
+              "dueDate": {
+                "type": "string",
+                "description": "Real YYYY-MM-DD calendar date, or empty to clear."
+              }
+            },
+            "required": [
+              "contactId",
+              "status"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "name": "updateCustomer",
+          "description": "Edit an existing customer profile; omitted fields are preserved. Call listContacts/getContact first. Uses the same records and validation as Customers. Imported free-text contact status is separate.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "contactId": {
+                "type": "string",
+                "description": "Exact existing contact ID from listContacts. Never invent an ID."
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "Lead",
+                  "Customer",
+                  "Inactive"
+                ]
+              },
+              "notes": {
+                "type": "string",
+                "description": "Relationship notes; replaces these notes only, separate from contact notes."
+              },
+              "nextAction": {
+                "type": "string"
+              },
+              "dueDate": {
+                "type": "string",
+                "description": "Real YYYY-MM-DD calendar date, or empty to clear."
+              }
+            },
+            "required": [
+              "contactId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        {
+          "name": "listCustomers",
+          "risk": "read",
+          "description": "List tracked contacts with their customer profiles, using the Customers view search, filters and due-date ordering. Untracked contacts are excluded. Call listContacts to find people to enrol. Undated contacts match All dates or No due date only.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "All statuses",
+                  "Lead",
+                  "Customer",
+                  "Inactive"
+                ]
+              },
+              "due": {
+                "type": "string",
+                "enum": [
+                  "All dates",
+                  "Overdue",
+                  "Due today",
+                  "Upcoming",
+                  "No due date"
+                ]
+              },
+              "today": {
+                "type": "string",
+                "description": "Optional YYYY-MM-DD reference date; defaults to the local calendar day."
+              }
+            },
+            "additionalProperties": false
+          }
         }
       ]
     }

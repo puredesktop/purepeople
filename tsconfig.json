@@ -1,18 +1,24 @@
 {
-  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
-    "baseUrl": ".",
-    "paths": {
-      "@purescience/platform-ui": ["../../packages/ui/src/index.ts"],
-      "@purescience/platform-ui/*": ["../../packages/ui/src/*"]
-    }
+    "target": "ES2022",
+    "strict": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "vite-env.d.ts"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "vite-env.d.ts"
+  ]
 }

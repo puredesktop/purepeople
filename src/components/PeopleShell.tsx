@@ -1,3 +1,5 @@
+import { CustomerView } from './customers/CustomerView'
+import { listCustomersHandler, saveCustomerHandler } from '../agents/customerTools'
 import { CrossAppDragHandle } from '@purescience/platform-ui/components/assets/CrossAppDragHandle'
 import { useContactMerge } from '../hooks/useContactMerge'
 import { MergePerson } from './people/MergePerson'
@@ -432,6 +434,7 @@ export function PeopleShell({
   }
 
   const now = Date.now()
+  const [customersOpen, setCustomersOpen] = useState(false)
   const [tab, setTab] = useState<'people' | 'orgs'>('people')
   /** null = every person; otherwise the list being worked through. */
   const [activeListId, setActiveListId] = useState<string | null>(null)
@@ -466,6 +469,9 @@ export function PeopleShell({
     logLabel: PUREPEOPLE_AGENT_LOG_LABEL,
     errorType: AgentPeopleToolError,
     handlers: {
+      createCustomer: async invoke => saveCustomerHandler(toolContextRef.current, invoke.arguments ?? {}, 'create'),
+      updateCustomer: async invoke => saveCustomerHandler(toolContextRef.current, invoke.arguments ?? {}, 'update'),
+      listCustomers: async invoke => listCustomersHandler(toolContextRef.current, invoke.arguments ?? {}),
       listContacts: async invoke =>
         listContactsHandler(toolContextRef.current, invoke.arguments ?? {}),
       getContact: async invoke =>
@@ -522,6 +528,7 @@ export function PeopleShell({
   // previous snapshot for this tab, so switching records cannot leave stale
   // identity behind; store edits republish the updated values too.
   useEffect(() => {
+    if (customersOpen) return // The customer view publishes its own selected record.
     const context =
       tab === 'people' && selected
         ? { kind: 'person' as const, record: selected }
@@ -535,7 +542,7 @@ export function PeopleShell({
     void update.catch(error =>
       console.warn('[purepeople] could not publish open record context:', error),
     )
-  }, [selected, selectedOrg, tab])
+  }, [selected, selectedOrg, tab, customersOpen])
 
   useEffect(
     () => () => {
@@ -934,6 +941,12 @@ export function PeopleShell({
     editor.innerHTML = html
   }
   useEffect(() => {
+    if (customersOpen) {
+      // The editors unmount in Customers; their next DOM nodes need reseeding.
+      seededNotesRef.current = null
+      seededOrgNotesRef.current = null
+      return
+    }
     if (!selected) return
     seedEditor(
       notesEditorRef.current,
@@ -944,7 +957,7 @@ export function PeopleShell({
       selected.notes,
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected])
+  }, [selected, customersOpen])
   useEffect(() => {
     if (!selectedOrg) return
     seedEditor(
@@ -956,7 +969,7 @@ export function PeopleShell({
       selectedOrg.notes,
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedOrg])
+  }, [selectedOrg, customersOpen])
 
   // ---- import / export ----------------------------------------------
   const csvFileRef = useRef<HTMLInputElement | null>(null)
@@ -1347,6 +1360,9 @@ export function PeopleShell({
     </NotesTools>
   )
 
+  if (customersOpen) return <Root><PeopleTokens /><CustomerView store={store} update={commit}
+    onBack={() => setCustomersOpen(false)} onNewContact={() => { setCustomersOpen(false); setTab('people'); setNewDraft('') }} /></Root>
+
   return (
     <Root>
       <PeopleTokens />
@@ -1474,6 +1490,7 @@ export function PeopleShell({
         ) : null}
 
         <RailHead>
+          <Action onClick={() => { flushNow(); setTab('people'); setCustomersOpen(true) }}>Customers</Action>
           {newDraft !== null ? (
             <SearchInput
               autoFocus

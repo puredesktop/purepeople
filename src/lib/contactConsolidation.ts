@@ -20,6 +20,12 @@ export function retainAlternatives(primary: ContactRecord, ...records: ContactRe
       record[field] ?? '', ...(record.alternatives?.[field] ?? []),
     ]).filter(value => value.trim() && value !== primary[field]))
   }
+  const profileKey = (profile: NonNullable<ContactRecord['customer']>) =>
+    JSON.stringify([profile.status, profile.notes ?? '', profile.nextAction ?? '', profile.dueDate ?? ''])
+  const profiles = distinct(records.flatMap(record => [
+    ...(record.customer ? [record.customer] : []), ...(record.alternatives?.customer ?? []),
+  ]), profileKey).filter(profile => !primary.customer || profileKey(profile) !== profileKey(primary.customer))
+  if (profiles.length) alternatives.customer = profiles
   alternatives.notes = distinct(records.flatMap(record => [
     { notes: record.notes, notesHtml: record.notesHtml }, ...(record.alternatives?.notes ?? []),
   ]).filter(note => (note.notes || note.notesHtml)
@@ -45,6 +51,7 @@ export function consolidateContactRecords(survivor: ContactRecord, absorbed: Con
     result.notes = absorbed.notes
     result.notesHtml = absorbed.notesHtml
   }
+  if (!result.customer && absorbed.customer) result.customer = { ...absorbed.customer }
   result.alternatives = retainAlternatives(result, survivor, absorbed)
   result.emails = distinct([...survivor.emails, ...absorbed.emails], email => email.trim().toLowerCase())
   for (const field of ['phones', 'tags', 'topics', 'channels', 'listIds', 'lockedFields'] as const) {
