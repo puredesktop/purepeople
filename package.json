@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "verify": "node scripts/verify-customers.mjs --require-clean --output dist/customer-verification.json",
+    "verify:working-tree": "node scripts/verify-customers.mjs --output node_modules/customer-verification.json"
   },
   "dependencies": {
     "@purescience/platform-ui": "file:../../packages/ui",

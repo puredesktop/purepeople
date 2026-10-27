@@ -1,3 +1,4 @@
+import { RetainedCustomerProfiles } from './RetainedCustomerProfiles'
 import type { ContactRecord } from '../../types'
 import { alternativeFields } from '../../lib/contactConsolidation'
 import type { EditRetained } from '../../lib/contactDetails'
@@ -7,7 +8,7 @@ import { Action, Actions, Field, Stack } from '../common/RecordControls'
 interface RetainedDetailsProps { contact: ContactRecord; onEdit: EditRetained; onOpenOrg: (name: string) => void }
 const labels = { name: 'Name', org: 'Organisation', title: 'Role', status: 'Status', avatarUrl: 'Picture URL' }
 export function RetainedDetails({ contact, onEdit, onOpenOrg }: RetainedDetailsProps) {
-  if (!alternativeFields.some(field => contact.alternatives?.[field]?.length) && !contact.alternatives?.notes?.length) return null
+  if (!alternativeFields.some(field => contact.alternatives?.[field]?.length) && !contact.alternatives?.notes?.length && !contact.alternatives?.customer?.length) return null
   return <details><summary>Retained alternative details</summary><Stack>
     <p>All merged values remain here. Making one primary keeps the previous primary as an alternative.</p>
     {alternativeFields.flatMap(field => (contact.alternatives?.[field] ?? []).map((value, index) => <Stack key={`${field}-${index}-${value}`}>
@@ -23,6 +24,7 @@ export function RetainedDetails({ contact, onEdit, onOpenOrg }: RetainedDetailsP
       <div contentEditable suppressContentEditableWarning role="textbox" aria-label={`Alternative note ${index + 1}`} dangerouslySetInnerHTML={{ __html: sanitizeNotesHtml(note.notesHtml ?? escapeText(note.notes ?? '')) }} onBlur={event => onEdit({ field: 'notes', index, value: event.currentTarget.innerHTML })} />
       <Action onClick={() => onEdit({ field: 'notes', index, primary: true })}>Make primary note</Action>
     </Stack>)}
+    <RetainedCustomerProfiles contact={contact} />
   </Stack></details>
 }
 function escapeText(value: string) { return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>') }

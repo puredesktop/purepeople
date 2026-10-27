@@ -33,6 +33,20 @@ Add contacts manually or import your own CSV records. Cross-app context depends 
 
 The app also uses the shared [puredesktop](https://puredesktop.ai) shell and drawer agent. Panels can vary with the current view and selection.
 
+## Customers
+
+Open **Customers** in the contact rail. Choose **Add existing contact**,
+search the contact book and select a person. Choose Lead, Customer or Inactive,
+add relationship notes and a next action with an optional due date, then choose
+**Save relationship**. **New contact** uses the normal contact creation flow;
+return to Customers and select that person to start tracking them.
+
+Search customers by contact details, relationship notes or next action. Combine
+status with Overdue, Due today, Upcoming or No due date to find follow-ups.
+Undated people appear under All dates and No due date. Existing contacts remain
+ordinary contacts until explicitly tracked, and imported free-text statuses and
+contact notes stay separate from the customer profile.
+
 ## Working with the agent
 
 Open the app’s drawer in [puredesktop](https://puredesktop.ai) and describe what you want to do. For example:
@@ -41,7 +55,7 @@ Open the app’s drawer in [puredesktop](https://puredesktop.ai) and describe wh
 >
 > Show the relationship context for this person.
 
-The app exposes 17 tools, including `listContacts`, `getContact`, `prepareProfilePhotoResearch`. See [agents.md](agents.md) for workflows and [plugin.json](plugin.json) for the complete tool schemas and approval flags. Some actions apply directly, while approval-marked actions ask first. Check the result in the app after a change.
+The app exposes 20 tools, including `listContacts`, `getContact`, `prepareProfilePhotoResearch`. See [agents.md](agents.md) for workflows and [plugin.json](plugin.json) for the complete tool schemas and approval flags. Some actions apply directly, while approval-marked actions ask first. Check the result in the app after a change.
 
 ## Files and data
 

@@ -29,6 +29,9 @@ import type { ContactAlternatives, ContactRecord, OrgRecord, PeopleStore, People
 import { profilePhotoResearchBrief, type ProfilePhotoResearchMode } from '../lib/profilePhotoResearch'
 
 export const PUREPEOPLE_AGENT_TOOL_NAMES = [
+  'createCustomer',
+  'updateCustomer',
+  'listCustomers',
   'listContacts',
   'getContact',
   'prepareProfilePhotoResearch',
