@@ -122,6 +122,22 @@ export async function requestMailCompose(
 }
 
 /**
+ * Open a list in PureOutreach, which brings its people in to be worked. False when PureOutreach is not on this desktop.
+ */
+export async function openListInOutreach(listId: string): Promise<boolean> {
+  if (isStandaloneDevMode()) return false
+  try {
+    await bridge.call(PLATFORM_BRIDGE_METHODS.WORKSPACE_OPEN_APP, [
+      { appSlug: 'outreach', resourceId: `people-list/${encodeURIComponent(listId)}` },
+    ])
+    return true
+  } catch (error) {
+    console.error('[purepeople] could not open PureOutreach', error)
+    return false
+  }
+}
+
+/**
  * Hand a request to the drawer's assistant as a message in this app's
  * conversation, then show the drawer. PurePeople never calls a model; the
  * assistant reads the people with its own tools. False when the shell

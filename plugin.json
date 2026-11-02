@@ -375,6 +375,19 @@
           }
         },
         {
+          "name": "workListInOutreach",
+          "description": "Open a list in PureOutreach, which brings its people into its open campaign to be researched and written to one at a time. Nothing changes in PurePeople and nothing is sent. By the list’s name or id; an unknown name is refused with the names there are.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "list": { "type": "string", "description": "The list, by its name or id." }
+            },
+            "required": ["list"]
+          },
+          "requiresApproval": false,
+          "risk": "write"
+        },
+        {
         "name": "deleteList",
         "risk": "destructive",
           "description": "Delete a list. The people who were on it are NOT deleted — only the collection is. Ask the user before calling this; it cannot be undone from here.",
