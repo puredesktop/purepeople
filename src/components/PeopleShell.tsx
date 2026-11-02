@@ -12,11 +12,15 @@ import { editRetainedDetail } from '../lib/contactDetails'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { createGlobalStyle, styled } from 'styled-components'
 import { usePlatformAgentTools } from '@purescience/platform-ui/bridge/react/usePlatformAgentTools'
+import { usePlatformBridge } from '@purescience/platform-ui/bridge/react/usePlatformBridge'
+import { usePlatformViewportResource } from '@purescience/platform-ui/bridge/react/usePlatformViewportResource'
+import { resourceTarget } from '../lib/resourceTarget'
 import {
   addToListHandler,
   AgentPeopleToolError,
   createListHandler,
   deleteListHandler,
+  workListInOutreachHandler,
   getContactHandler,
   getOrgHandler,
   listContactsHandler,
@@ -71,6 +75,7 @@ import {
   copyText,
   isStandaloneDevMode,
   publishOpenRecordContext,
+  openListInOutreach,
   requestMailCompose,
   saveTextFileAs,
 } from '../lib/peopleBridge'
@@ -460,6 +465,18 @@ export function PeopleShell({
   useEffect(() => setListDeleteArmed(false), [activeListId, tab])
   useEffect(() => setNewDraft(null), [tab])
 
+  // another app (PureOutreach, tracing a person or a list back) asked for a record here
+  const { meta: bridgeMeta } = usePlatformBridge()
+  const { resource: openedResource } = usePlatformViewportResource(!!bridgeMeta, bridgeMeta ?? null)
+  useEffect(() => {
+    const target = resourceTarget(openedResource?.path)
+    if (!target) return
+    setTab('people')
+    setSelectedOrgId(null)
+    if (target.kind === 'list') setActiveListId(target.id)
+    else setSelectedId(target.id)
+  }, [openedResource])
+
   const toolContextRef = useRef({ store, setStore: commit })
   toolContextRef.current = { get store() { return storeRef.current }, setStore: commit }
   usePlatformAgentTools({
@@ -493,6 +510,8 @@ export function PeopleShell({
         createListHandler(toolContextRef.current, invoke.arguments ?? {}),
       renameList: async invoke =>
         renameListHandler(toolContextRef.current, invoke.arguments ?? {}),
+      workListInOutreach: async invoke =>
+        workListInOutreachHandler(toolContextRef.current, invoke.arguments ?? {}),
       deleteList: async invoke =>
         deleteListHandler(toolContextRef.current, invoke.arguments ?? {}),
       addToList: async invoke =>
@@ -1463,6 +1482,13 @@ export function PeopleShell({
               <>
                 <QuietLink role="button" onClick={() => setListEditOpen(true)}>
                   Rename
+                </QuietLink>
+                <QuietLink
+                  role="button"
+                  title="Write to these people, one at a time, in PureOutreach"
+                  onClick={() => void openListInOutreach(activeList.id)}
+                >
+                  Work in Outreach
                 </QuietLink>
                 <DeleteLink
                   role="button"

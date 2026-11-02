@@ -94,7 +94,7 @@ contacts", "investors" — and is not the same thing as a tag: a tag
 describes a person, a list is a place. Lists exist even when empty, and
 deleting one never deletes anybody.
 
-Six tools cover them. Every one takes a list by NAME (or id) and, when
+Seven tools cover them. Every one takes a list by NAME (or id) and, when
 the name matches nothing, refuses and tells you which lists exist —
 so a near-duplicate ("investors" beside "Investors 2026") is something
 you propose, never something you create by accident.
@@ -114,6 +114,9 @@ you propose, never something you create by accident.
   in PurePeople; only their place on this list ends.
 - `renameList {list, name}` — membership is held by id, so a rename
   edits no contact records at all.
+- `workListInOutreach {list}` — open the list in PureOutreach, which brings its
+  people in to be researched and written to one at a time. Nothing changes here
+  and nothing is sent. The same as the list's **Work in Outreach** button.
 - `deleteList {list, name}` — destroys the collection, keeps the
   people. `name` must repeat the list's exact current name, and the
   user must have asked for it: confirm in chat first.

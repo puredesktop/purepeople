@@ -1,4 +1,5 @@
 import { mergeContacts } from '../lib/contactConsolidation'
+import { openListInOutreach } from '../lib/peopleBridge'
 import type { AgentToolHandlerResult } from '@purescience/platform-ui/bridge/react/usePlatformAgentTools'
 import {
   contactByIdOrEmail,
@@ -43,6 +44,7 @@ export const PUREPEOPLE_AGENT_TOOL_NAMES = [
   'listLists',
   'createList',
   'renameList',
+  'workListInOutreach',
   'deleteList',
   'addToList',
   'removeFromList',
@@ -405,6 +407,20 @@ export async function renameListHandler(
   return ok({
     renamed: `${list.name} → ${name}`,
     note: 'Renaming a list changes no one\u2019s record; membership is held by id.',
+  })
+}
+
+export async function workListInOutreachHandler(
+  context: PeopleAgentToolContext,
+  args: Record<string, unknown>,
+): Promise<AgentToolHandlerResult> {
+  const list = requireList(context.store, args.list)
+  if (!(await openListInOutreach(list.id))) {
+    throw new AgentPeopleToolError('PureOutreach is not on this desktop, so the list cannot be worked there.')
+  }
+  return ok({
+    opened: list.name,
+    note: 'PureOutreach brings these people into its open campaign. Nothing changes in PurePeople, and nothing is sent.',
   })
 }
 
