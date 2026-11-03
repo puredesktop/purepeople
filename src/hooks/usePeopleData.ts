@@ -14,6 +14,25 @@ import type {
 /** Row writes per batch: independent records go over the bridge together. */
 const WRITE_BATCH = 20
 
+/** How often a copy looks at the rows when no change event told it to. A copy held in the room gets no events. */
+const LOOK_EVERY_MS = 15_000
+/** Change events coalesce: an import fires one per row. */
+const EVENT_SETTLE_MS = 300
+/** A burst of mail sightings re-reads the rows this often rather than once per sighting. */
+const SIGHTINGS_PER_LOOK = 50
+
+const VIEWED = ['contacts', 'orgs', 'lists', 'encounters'] as const
+type Viewed = (typeof VIEWED)[number]
+
+function sameRows(left: ReadonlyArray<{ id: string }>, right: ReadonlyArray<{ id: string }>): boolean {
+  if (left.length !== right.length) return false
+  const byId = new Map(left.map(row => [row.id, row]))
+  return right.every(row => {
+    const other = byId.get(row.id)
+    return other === row || (other !== undefined && JSON.stringify(other) === JSON.stringify(row))
+  })
+}
+
 async function settleBatch(writes: Promise<void>[]): Promise<void> {
   // A rejection must not release the mutation queue while siblings still write.
   const results = await Promise.allSettled(writes)
@@ -65,7 +84,17 @@ export function isEncounterRecord(value: unknown): value is EncounterRecord {
     && record!.emails.every(email => typeof email === 'string')
 }
 
-export function usePeopleData(appId: string) {
+/**
+ * Several copies of PurePeople run over one set of rows (a tab, and a copy held in a page), each with its own memory. A
+ * row written from memory that has gone stale erases what another copy saved, and puts back what it deleted. So every
+ * change starts by looking: the updater runs over the rows as they are now, and a row this copy was showing that has since
+ * gone stays gone. The shell's row store has no compare-and-set, so two writes to one row within the same moment are
+ * still last-writer-wins.
+ */
+export function usePeopleData(appId: string, { background = true }: {
+  /** False in a copy held in a page: the normal tab consumes the feed and finishes merges. */
+  background?: boolean
+} = {}) {
   const contacts = useData<ContactRecord>(appId, 'contacts')
   const orgs = useData<OrgRecord>(appId, 'orgs')
   const lists = useData<PeopleList>(appId, 'lists')
@@ -87,8 +116,13 @@ export function usePeopleData(appId: string) {
     current.current = store
     rendered.current = store
   }
-  const loading = contacts.loading || orgs.loading || lists.loading
-  const error = contacts.error ?? orgs.error ?? lists.error
+  // Looking again later must not put the loading state back: that would unmount the open card.
+  const opened = useRef(false)
+  const reading = contacts.loading || orgs.loading || lists.loading
+  const readError = contacts.error ?? orgs.error ?? lists.error
+  if (!reading && !readError) opened.current = true
+  const loading = !opened.current && reading
+  const error = opened.current ? null : readError
 
   // Preserve functional-update ordering while row writes cross the bridge.
   const pending = useRef(Promise.resolve())
@@ -97,6 +131,27 @@ export function usePeopleData(appId: string) {
     pending.current = result.then(() => {}, error => { console.error('[purepeople] queued update failed:', error) })
     return result
   }, [])
+
+  const reloads = useRef<Record<Viewed, () => void>>({ contacts: contacts.reload, orgs: orgs.reload, lists: lists.reload, encounters: encounters.reload })
+  reloads.current = { contacts: contacts.reload, orgs: orgs.reload, lists: lists.reload, encounters: encounters.reload }
+
+  /** Read the rows as they are now. Says what differs from what this copy held, and which of its rows have gone. */
+  const look = useCallback(async () => {
+    const seen = current.current
+    const read = async <T,>(collection: Viewed, valid: (value: unknown) => value is T): Promise<T[]> =>
+      (await data.list<T>(appId, collection)).map(record => record.value).filter(valid)
+    const [latestContacts, latestOrgs, latestLists, latestEncounters] = await Promise.all([
+      read('contacts', isContactRecord), read('orgs', isOrgRecord), read('lists', isPeopleList), read('encounters', isEncounterRecord),
+    ])
+    const latest = { contacts: latestContacts, orgs: latestOrgs, lists: latestLists, encounters: latestEncounters }
+    const changed = VIEWED.filter(name => !sameRows(seen[name] ?? [], latest[name]))
+    const goneFrom = (name: Viewed): Set<string> => {
+      const ids = new Set(latest[name].map(row => row.id))
+      return new Set((seen[name] ?? []).map(row => row.id).filter(id => !ids.has(id)))
+    }
+    current.current = { ...seen, ...latest }
+    return { changed, gone: { contacts: goneFrom('contacts'), orgs: goneFrom('orgs'), lists: goneFrom('lists') } }
+  }, [appId])
 
   // The survivor row is the journal: a receipt and the complete merged values
   // are one set operation. Never recompute a merge after that set succeeds.
@@ -119,10 +174,18 @@ export function usePeopleData(appId: string) {
     }
   }, [appId, contacts.set, contacts.delete])
 
-  const commit = useCallback(async (updater: Parameters<PeopleUpdate>[0]): Promise<PeopleStore> => {
+  const commit = useCallback(async (updater: Parameters<PeopleUpdate>[0], looking = true): Promise<PeopleStore> => {
+    const noticed = looking ? await look() : null
     await recover()
     const before = current.current
-    const after = updater(before)
+    const proposed = updater(before)
+    // Anything put back here is a stale card's edit of a row another copy deleted.
+    const after: PeopleStore = noticed ? {
+      ...proposed,
+      contacts: proposed.contacts.filter(item => !noticed.gone.contacts.has(item.id)),
+      orgs: proposed.orgs?.filter(item => !noticed.gone.orgs.has(item.id)),
+      lists: proposed.lists?.filter(item => !noticed.gone.lists.has(item.id)),
+    } : proposed
     const save = async <T extends { id: string }>(
       name: 'contacts' | 'orgs' | 'lists',
       previous: T[],
@@ -163,42 +226,98 @@ export function usePeopleData(appId: string) {
     await recover()
     await save('orgs', before.orgs ?? [], after.orgs ?? [], orgs)
     await save('lists', before.lists ?? [], after.lists ?? [], lists)
+    // After the writes, so these reads hold them too.
+    for (const name of noticed?.changed ?? []) reloads.current[name]()
     return current.current
-  }, [recover, contacts.set, contacts.delete, orgs.set, orgs.delete, lists.set, lists.delete])
+  }, [look, recover, contacts.set, contacts.delete, orgs.set, orgs.delete, lists.set, lists.delete])
+
+  useEffect(() => {
+    if (!background || loading || error) return
+    void enqueue(recover).catch(error => console.error('[purepeople] merge recovery failed:', error))
+  }, [background, loading, error, enqueue, recover])
+
+  const update = useCallback<PeopleUpdate>(updater => enqueue(() => commit(updater)), [commit, enqueue])
+
+  // Take what other copies saved. Identical rows change nothing, so a look costs a read and no render.
+  const refresh = useCallback((): Promise<void> => enqueue(async () => {
+    const { changed } = await look()
+    for (const name of changed) reloads.current[name]()
+  }), [enqueue, look])
+  const refreshQuietly = useCallback((): void => {
+    void refresh().catch(error => console.warn('[purepeople] could not look at the rows:', error))
+  }, [refresh])
+
+  const settling = useRef<number | undefined>(undefined)
+  const onRowChange = (change: { collection: string }): void => {
+    if (loading || error || !VIEWED.includes(change.collection as Viewed)) return
+    window.clearTimeout(settling.current)
+    settling.current = window.setTimeout(refreshQuietly, EVENT_SETTLE_MS)
+  }
+  useEvents(appId, { set: onRowChange, deleted: onRowChange })
 
   useEffect(() => {
     if (loading || error) return
-    void enqueue(recover).catch(error => console.error('[purepeople] merge recovery failed:', error))
-  }, [loading, error, enqueue, recover])
+    const poll = window.setInterval(() => {
+      if (document.visibilityState !== 'hidden') refreshQuietly()
+    }, LOOK_EVERY_MS)
+    const onVisibility = (): void => {
+      if (document.visibilityState === 'visible') refreshQuietly()
+    }
+    window.addEventListener('focus', refreshQuietly)
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      window.clearInterval(poll)
+      window.clearTimeout(settling.current)
+      window.removeEventListener('focus', refreshQuietly)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [loading, error, refreshQuietly])
 
-  const update = useCallback<PeopleUpdate>(updater => enqueue(() => commit(updater)), [commit, enqueue])
-  const consume = useCallback((key: string): Promise<void> => enqueue(async () => {
-    const entry = await data.get<ContactFeedEntry>(appId, 'contactFeed', key)
-    if (!entry) return
-    await commit(store => mergeFeedEntry(store, entry.value))
-    await data.delete(appId, 'contactFeed', key)
-  }), [appId, commit, enqueue])
+  // The contact feed: a queue, drained by one copy in order, looking once per burst rather than per sighting.
+  const sightings = useRef(new Set<string>())
+  const draining = useRef(false)
+  const drain = useCallback((): void => {
+    if (draining.current) return
+    draining.current = true
+    void enqueue(async () => {
+      let taken = 0
+      for (const key of sightings.current) {
+        sightings.current.delete(key)
+        try {
+          const entry = await data.get<ContactFeedEntry>(appId, 'contactFeed', key)
+          if (!entry) continue
+          await commit(store => mergeFeedEntry(store, entry.value), taken++ % SIGHTINGS_PER_LOOK === 0)
+          await data.delete(appId, 'contactFeed', key)
+        } catch (error) {
+          console.error('[purepeople] contact feed failed:', error)
+        }
+      }
+    }).finally(() => {
+      draining.current = false
+      if (sightings.current.size) drain()
+    })
+  }, [appId, commit, enqueue])
 
   useEvents(appId, {
     set: change => {
-      if (loading || error) return
-      void consume(change.key).catch(error => console.error('[purepeople] contact feed failed:', error))
+      if (!background || loading || error) return
+      sightings.current.add(change.key)
+      drain()
     },
   }, 'contactFeed')
 
   useEffect(() => {
-    if (loading || error) return
+    if (!background || loading || error) return
     let cancelled = false
     void data.list<ContactFeedEntry>(appId, 'contactFeed')
-      .then(async entries => {
-        for (const entry of entries) {
-          if (cancelled) return
-          await consume(entry.key)
-        }
+      .then(entries => {
+        if (cancelled) return
+        for (const entry of entries) sightings.current.add(entry.key)
+        drain()
       })
       .catch(error => console.error('[purepeople] contact feed failed:', error))
     return () => { cancelled = true }
-  }, [appId, consume, loading, error])
+  }, [appId, background, drain, loading, error])
 
   return { store, update, loading, error }
 }

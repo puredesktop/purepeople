@@ -1,0 +1,215 @@
+/* Compact PurePeople, for the Executive room (useCompactInRoom). The frame carries data-compact-room only then, and
+   every rule here starts from it, or from html[data-held-in-room] which only a nested frame has. Chrome is hidden, not
+   removed: everything stays mounted, so state and agent tools stay alive. */
+
+/* The app header: wordmark, share, assistant controls. Full app gives them back. */
+[data-compact-room] > header {
+  display: none;
+}
+
+/* Tabs, list chips, sort, import and export, customers, network, photo search, merge, delete. */
+[data-compact-room] [data-compact-hide] {
+  display: none !important;
+}
+
+/* Boards and the network graph can only be open here if they were open before compact began. Their state waits. */
+[data-compact-room] div:has(> [role='dialog'][aria-label$=' board']),
+[data-compact-room] div:has(> [role='dialog'][aria-label$="'s network"]) {
+  display: none;
+}
+
+/* One thing at a time: the list, or one person's card. */
+[data-compact-room] [data-compact-part='rail'][data-chrome] {
+  flex: 1 1 auto;
+  width: 100%;
+  --pure-chrome-inset: 24px; /* the list reads across the whole box */
+}
+[data-compact-room] [data-compact-view='card'] > [data-compact-part='rail'][data-chrome],
+[data-compact-room] [data-compact-view='list'] > [data-compact-part='detail'] {
+  display: none;
+}
+
+/* The search and one way to add someone, on one line. */
+[data-compact-room] [data-compact-part='search'] {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 24px 12px;
+}
+[data-compact-room] [data-compact-part='search'] > input {
+  flex: 1;
+  min-width: 0;
+}
+[data-compact-room] .people-compact-new,
+[data-compact-room] .people-compact-back {
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--pure-chrome-ui-size);
+  cursor: pointer;
+}
+[data-compact-room] .people-compact-new {
+  color: var(--pp-accent);
+}
+[data-compact-room] .people-compact-new:hover,
+[data-compact-room] .people-compact-back:hover {
+  color: var(--pp-accent-text);
+  text-decoration: underline;
+}
+[data-compact-room] .people-compact-new:focus-visible,
+[data-compact-room] .people-compact-back:focus-visible {
+  outline: 2px solid var(--pp-accent-solid);
+  outline-offset: 2px;
+}
+
+[data-compact-room] [data-compact-part='rail'] [data-chrome='list-row'] {
+  margin: 0;
+}
+
+/* Nothing here yet: one quiet line and one way forward, in the middle of the box. */
+[data-compact-room] .people-compact-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 100%;
+  padding: 24px;
+  text-align: center;
+}
+[data-compact-room] .people-compact-empty p {
+  margin: 0;
+  color: var(--pp-text-soft);
+  font-family: var(--platform-typography-font-family-content);
+  font-size: var(--pure-chrome-reading-size, 16px);
+  line-height: var(--pure-chrome-reading-line, 1.6);
+}
+
+/* The way back stays in sight above the card, however far the card scrolls. */
+[data-compact-room] .people-compact-bar {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 12px 24px 10px;
+  border-bottom: 1px solid var(--pp-wash-deep);
+}
+[data-compact-room] .people-compact-back {
+  color: var(--pp-muted);
+}
+
+/* The card comes to the edges of the box. */
+[data-compact-room] [data-compact-part='scroll'] {
+  padding: 18px 24px 28px;
+}
+[data-compact-room] [data-compact-part='measure'] {
+  max-width: none;
+  gap: 18px;
+}
+[data-compact-room] [data-compact-part='head'] {
+  align-items: center;
+}
+[data-compact-room] [data-compact-part='head'] > :first-child {
+  width: 48px;
+  height: 48px;
+  font-size: 20px;
+}
+[data-compact-room] [data-compact-part='org-name'] {
+  color: inherit;
+  cursor: text;
+  text-decoration: none;
+}
+
+/* Held inside an entry of the room: one surface, flat on the paper, square edges, no second card. It is always a
+   white ground, so the ink is set to match whatever theme the desktop is in. Tokens set at :root were resolved there,
+   so the roles are restated here rather than derived. */
+html[data-held-in-room],
+html[data-held-in-room] body {
+  background: #ffffff !important;
+}
+html[data-held-in-room],
+html[data-held-in-room] [data-compact-room] {
+  color-scheme: light;
+  color: #1f2328;
+  background: #ffffff;
+  --platform-colors-text: #1f2328;
+  --platform-colors-text-secondary: #4b5158;
+  --platform-colors-text-disabled: #9aa0a6;
+  --platform-colors-border-strong: #c9ced4;
+  --pure-chrome-sidebar: #ffffff;
+  --pure-chrome-surface: #ffffff;
+  --pure-chrome-paper: #ffffff;
+  --pure-chrome-well: #f3f4f6;
+  --pure-chrome-hover: #f5f6f7;
+  --pure-chrome-selection: #eef0f3;
+  --pure-chrome-line: #e4e6e9;
+  --pure-chrome-fence: #eef0f2;
+  --pure-chrome-muted: #6b7178;
+  --pure-chrome-soft: #4b5158;
+  --pure-chrome-radius: 0;
+  --pure-chrome-accent: oklch(from var(--app-acc, var(--platform-colors-accent)) 0.5 c h);
+  --pure-chrome-on-accent: #ffffff;
+  --pp-paper: #f3f4f6;
+  --pp-paper-raised: #f7f8f9;
+  --pp-hover: #f5f6f7;
+  --pp-wash: #f3f4f6;
+  --pp-wash-deep: #e4e6e9;
+  --pp-wash-strong: #e4e6e9;
+  --pp-chip: #f3f4f6;
+  --pp-chip-text: #4b5158;
+  --pp-card: #ffffff;
+  --pp-panel: #ffffff;
+  --pp-panel-strong: #ffffff;
+  --pp-popover: #ffffff;
+  --pp-glass-edge: #e4e6e9;
+  --pp-glass-edge-strong: #e4e6e9;
+  --pp-glass-line: #e4e6e9;
+  --pp-glass-blur: none;
+  --pp-glass-shadow: none;
+  --pp-line: #e4e6e9;
+  --pp-line-soft: #e4e6e9;
+  --pp-line-strong: #c9ced4;
+  --pp-faint: #9aa0a6;
+  --pp-muted-2: #6b7178;
+  --pp-icon: #6b7178;
+  --pp-muted: #6b7178;
+  --pp-text-soft: #4b5158;
+  --pp-text-strong: #4b5158;
+  --pp-text-notes: #1f2328;
+  --pp-ink: #1f2328;
+  --pp-ink-deep: #1f2328;
+  --pp-accent: var(--pure-chrome-accent);
+  --pp-accent-text: var(--pure-chrome-accent);
+  --pp-accent-solid: var(--pure-chrome-accent);
+  --pp-on-solid: #ffffff;
+  --pp-green-wash: #eef0f3;
+  --pp-green-wash-deep: #e4e6e9;
+  --pp-plum: #8d4b63;
+  --pp-plum-deep: #6d374a;
+  --pp-warn: #c08a3e;
+  --pp-shadow: rgba(40, 34, 30, 0.3);
+}
+html[data-held-in-room] [data-compact-room] [data-compact-part='search'] > input {
+  background: #ffffff;
+}
+html[data-held-in-room] [data-compact-room] [data-compact-view] {
+  gap: 0;
+  padding: 0;
+  background: #ffffff;
+}
+html[data-held-in-room] [data-compact-room] [data-compact-part='rail'][data-chrome],
+html[data-held-in-room] [data-compact-room] [data-compact-part='detail'] {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: #ffffff;
+}
+html[data-held-in-room] [data-compact-room] [data-compact-part='rail'] [data-chrome='list-row'] {
+  border-radius: 0;
+}
+html[data-held-in-room] [data-compact-room] [data-compact-part='rows'] > * {
+  border-radius: 0;
+}
