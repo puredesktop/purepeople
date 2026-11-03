@@ -9,6 +9,7 @@ import {
   readStandaloneStore,
   writeStandaloneStore,
 } from './lib/peopleBridge'
+import { useBackgroundWork } from './hooks/useBackgroundWork'
 import { usePeopleData } from './hooks/usePeopleData'
 import type { PeopleStore, PeopleUpdate } from './types'
 
@@ -38,7 +39,8 @@ export function App(): React.ReactElement {
 }
 
 function ConnectedPeople({ appId, compact }: { appId: string; compact: boolean }): React.ReactElement {
-  const { store, update, loading, error } = usePeopleData(appId)
+  const background = useBackgroundWork()
+  const { store, update, loading, error } = usePeopleData(appId, { background })
   return <PeopleContent store={loading ? null : store} update={update} error={error} compact={compact} />
 }
 
@@ -56,7 +58,8 @@ function StandalonePeople({ compact }: { compact: boolean }): React.ReactElement
   }, [])
   const update: PeopleUpdate = async updater => {
     if (!current.current) throw new Error('People is not loaded')
-    const next = updater(current.current)
+    // Standalone dev keeps one whole store: another browser tab may have saved since this one read it.
+    const next = updater(readStandaloneStore())
     writeStandaloneStore(next)
     current.current = next
     setStore(next)

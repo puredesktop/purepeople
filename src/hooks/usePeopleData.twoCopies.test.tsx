@@ -227,9 +227,9 @@ describe('a copy picks up what the other changed', () => {
 
   it('by looking on a timer, when no events reach it', async () => {
     seed(contact('known@x.example'))
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
     await open('held', true)
     await open('whole')
-    vi.useFakeTimers({ toFake: ['setInterval'] })
     await act(async () => { await copies.whole!.update(store => upsertContact(store, { email: 'new@x.example', name: 'New' }, 'user').store) })
     await act(async () => { vi.advanceTimersByTime(60_000) })
     await flush()

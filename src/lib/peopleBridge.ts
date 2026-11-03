@@ -101,21 +101,28 @@ export async function requestMailCompose(
 ): Promise<void> {
   if (isStandaloneDevMode() || recipients.length === 0) return
   const { appSlug } = await bridge.waitForReady()
-  const existing = (await bridge.call(
-    PLATFORM_BRIDGE_METHODS.STORAGE_READ_JSON,
-    [{ appSlug: MAIL_APP_SLUG, fileName: COMPOSE_INTENTS_FILE }],
-  )) as { value?: { entries?: Record<string, unknown> } } | null
-  const entries = { ...(existing?.value?.entries ?? {}) }
   const id = `people_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`
-  entries[id] = {
-    id,
-    at: new Date().toISOString(),
-    from: appSlug,
-    to: recipients,
+  // One shared file, which Mail and other copies also write: if it changed since the read, nothing is written and this reads again.
+  for (let attempt = 0; ; attempt++) {
+    const existing = (await bridge.call(
+      PLATFORM_BRIDGE_METHODS.STORAGE_READ_JSON,
+      [{ appSlug: MAIL_APP_SLUG, fileName: COMPOSE_INTENTS_FILE }],
+    )) as { value?: { entries?: Record<string, unknown> }; version?: string | null } | null
+    const entries = {
+      ...(existing?.value?.entries ?? {}),
+      [id]: { id, at: new Date().toISOString(), from: appSlug, to: recipients },
+    }
+    const written = (await bridge.call(PLATFORM_BRIDGE_METHODS.STORAGE_WRITE_JSON, [
+      {
+        appSlug: MAIL_APP_SLUG,
+        fileName: COMPOSE_INTENTS_FILE,
+        value: { entries },
+        ...(existing?.version !== undefined ? { ifMatch: existing.version } : {}),
+      },
+    ])) as { conflict?: boolean } | null
+    if (!written?.conflict) break
+    if (attempt >= 4) throw new Error('The email could not be started: PureMail kept changing its file. Try again.')
   }
-  await bridge.call(PLATFORM_BRIDGE_METHODS.STORAGE_WRITE_JSON, [
-    { appSlug: MAIL_APP_SLUG, fileName: COMPOSE_INTENTS_FILE, value: { entries } },
-  ])
   await bridge.call(PLATFORM_BRIDGE_METHODS.WORKSPACE_OPEN_APP, [
     { appSlug: MAIL_APP_SLUG, resourceId: `compose/${id}` },
   ])
