@@ -5,7 +5,7 @@ import type { EditRetained } from '../../lib/contactDetails'
 import { sanitizeNotesHtml } from '../../lib/sanitizeNotesHtml'
 import { Action, Actions, Field, Stack } from '../common/RecordControls'
 
-interface RetainedDetailsProps { contact: ContactRecord; onEdit: EditRetained; onOpenOrg: (name: string) => void }
+interface RetainedDetailsProps { contact: ContactRecord; onEdit: EditRetained; onOpenOrg?: (name: string) => void }
 const labels = { name: 'Name', org: 'Organisation', title: 'Role', status: 'Status', avatarUrl: 'Picture URL' }
 export function RetainedDetails({ contact, onEdit, onOpenOrg }: RetainedDetailsProps) {
   if (!alternativeFields.some(field => contact.alternatives?.[field]?.length) && !contact.alternatives?.notes?.length && !contact.alternatives?.customer?.length) return null
@@ -17,7 +17,7 @@ export function RetainedDetails({ contact, onEdit, onOpenOrg }: RetainedDetailsP
         <Action onClick={() => onEdit({ field, index, primary: true })}>Make primary</Action>
       </Actions></label>
       {field === 'avatarUrl' && value && <img src={value} alt="Alternative profile" width="64" height="64" />}
-      {field === 'org' && value && <Action onClick={() => onOpenOrg(value)}>Open {value}</Action>}
+      {field === 'org' && value && onOpenOrg && <Action onClick={() => onOpenOrg(value)}>Open {value}</Action>}
     </Stack>))}
     {(contact.alternatives?.notes ?? []).map((note, index) => <Stack key={`${index}-${note.notesHtml ?? note.notes}`}>
       <strong>Alternative note {index + 1}</strong>

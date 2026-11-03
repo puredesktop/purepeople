@@ -406,10 +406,16 @@ function Chevron(): React.ReactElement {
 export function PeopleShell({
   store,
   update,
+  compact = false,
 }: {
   store: PeopleStore
   update: PeopleUpdate
+  /** Held in the Executive room (useCompactInRoom): one job, find a person and correct their card. */
+  compact?: boolean
 }): React.ReactElement {
+  // Compact hides what it does not use rather than unmounting it. With compact off these add nothing to the page.
+  const compactHide = compact ? { 'data-compact-hide': '' } : undefined
+  const compactPart = (part: string) => (compact ? { 'data-compact-part': part } : undefined)
   const [saveError, setSaveError] = useState<string | null>(null)
   const storeRef = useRef(store)
   storeRef.current = store
@@ -464,6 +470,10 @@ export function PeopleShell({
   const [listDeleteArmed, setListDeleteArmed] = useState(false)
   useEffect(() => setListDeleteArmed(false), [activeListId, tab])
   useEffect(() => setNewDraft(null), [tab])
+  // Compact is about people, so it opens on them even if the full app was on its Orgs tab.
+  useEffect(() => {
+    if (compact) setTab('people')
+  }, [compact])
 
   // another app (PureOutreach, tracing a person or a list back) asked for a record here
   const { meta: bridgeMeta } = usePlatformBridge()
@@ -571,7 +581,8 @@ export function PeopleShell({
   )
 
   const peopleMatches = useMemo(() => {
-    const list = [...searchContacts(store, query, RAIL_LIMIT, activeListId)]
+    // Compact shows no list chips, so a list left open in the full app must not quietly narrow its search.
+    const list = [...searchContacts(store, query, RAIL_LIMIT, compact ? null : activeListId)]
     if (sort === 'added')
       list.sort((a, b) => b.firstSeenAt.localeCompare(a.firstSeenAt))
     else if (sort === 'name')
@@ -584,7 +595,7 @@ export function PeopleShell({
       )
     else list.sort((a, b) => b.lastSeenAt.localeCompare(a.lastSeenAt))
     return list
-  }, [store.contacts, query, sort, activeListId])
+  }, [store.contacts, query, sort, activeListId, compact])
   const stalePartition = useMemo(() => {
     if (sort !== 'lastSeen') return { recent: peopleMatches, stale: [] }
     const cutoff = now - STALE_MONTHS * 30 * 86_400_000
@@ -1383,10 +1394,10 @@ export function PeopleShell({
     onBack={() => setCustomersOpen(false)} onNewContact={() => { setCustomersOpen(false); setTab('people'); setNewDraft('') }} /></Root>
 
   return (
-    <Root>
+    <Root data-compact-view={compact ? (tab === 'people' && selected ? 'card' : 'list') : undefined}>
       <PeopleTokens />
-      <Rail>
-        <RailTabs>
+      <Rail {...compactPart('rail')}>
+        <RailTabs {...compactHide}>
           <RailTab $active={tab === 'people'} onClick={() => setTab('people')}>
             <span>People</span>
             <TabCount $active={tab === 'people'}>
@@ -1406,7 +1417,7 @@ export function PeopleShell({
         </RailTabs>
 
         {tab === 'people' && (
-          <ListBar>
+          <ListBar {...compactHide}>
             <ListChip
               $active={activeListId === null}
               onClick={() => setActiveListId(null)}
@@ -1461,7 +1472,7 @@ export function PeopleShell({
         )}
 
         {activeList ? (
-          <ListToolRow>
+          <ListToolRow {...compactHide}>
             {listEditOpen ? (
               <ChipInput
                 autoFocus
@@ -1515,8 +1526,8 @@ export function PeopleShell({
           </ListToolRow>
         ) : null}
 
-        <RailHead>
-          <Action onClick={() => { flushNow(); setTab('people'); setCustomersOpen(true) }}>Customers</Action>
+        <RailHead {...compactPart('search')} {...(store.contacts.length === 0 && newDraft === null ? compactHide : undefined)}>
+          <Action {...compactHide} onClick={() => { flushNow(); setTab('people'); setCustomersOpen(true) }}>Customers</Action>
           {newDraft !== null ? (
             <SearchInput
               autoFocus
@@ -1547,7 +1558,9 @@ export function PeopleShell({
           ) : (
             <SearchInput
               placeholder={
-                tab === 'orgs'
+                compact
+                  ? 'Search people'
+                  : tab === 'orgs'
                   ? 'Search orgs, industries, domains'
                   : activeList
                     ? `Search ${activeList.name}`
@@ -1557,7 +1570,12 @@ export function PeopleShell({
               onChange={event => setQuery(event.currentTarget.value)}
             />
           )}
-          <SortRow>
+          {compact && newDraft === null ? (
+            <button type="button" className="people-compact-new" onClick={() => setNewDraft('')}>
+              + New person
+            </button>
+          ) : null}
+          <SortRow {...compactHide}>
             <SortLabel>Sort</SortLabel>
             <SortChipWrap>
               <SortChip onClick={() => setSortMenuOpen(open => !open)}>
@@ -1612,7 +1630,7 @@ export function PeopleShell({
           }}
         />
         {importPreview ? (
-          <ImportPanel>
+          <ImportPanel {...compactHide}>
             <div>
               {importPreview.profile === 'hubspot' ? 'HubSpot export' : 'CSV'}{' '}
               — {importPreview.entries.length}{' '}
@@ -1646,7 +1664,7 @@ export function PeopleShell({
           </ImportPanel>
         ) : null}
         {importNote ? (
-          <ImportPanel role="status" onClick={() => setImportNote(null)}>
+          <ImportPanel {...compactHide} role="status" onClick={() => setImportNote(null)}>
             {importNote}
           </ImportPanel>
         ) : null}
@@ -1706,7 +1724,17 @@ export function PeopleShell({
                   </RailRowSeen>
                 </RailRow>
               ))}
-              {peopleMatches.length === 0 && (
+              {compact && store.contacts.length === 0 && (
+                <div className="people-compact-empty">
+                  <p>No people yet.</p>
+                  {newDraft === null ? (
+                    <button type="button" className="people-compact-new" onClick={() => setNewDraft('')}>
+                      + New person
+                    </button>
+                  ) : null}
+                </div>
+              )}
+              {peopleMatches.length === 0 && !(compact && store.contacts.length === 0) && (
                 <EmptyNote>
                   {store.contacts.length === 0
                     ? 'No people yet. Other apps feed this list as you use them.'
@@ -1718,7 +1746,7 @@ export function PeopleShell({
                   Showing the first {RAIL_LIMIT}. Search to narrow the list.
                 </EmptyNote>
               )}
-              {hasQuery && orgMatches.length > 0 && (
+              {!compact && hasQuery && orgMatches.length > 0 && (
                 <>
                   <StaleHeader>
                     <span>Orgs matching</span>
@@ -1804,7 +1832,7 @@ export function PeopleShell({
         </RailList>
       </Rail>
 
-      <Detail data-agent-ref="@open" data-agent-label={(tab === 'orgs' ? selectedOrg?.name : selected?.name) || 'People'}>
+      <Detail {...compactPart('detail')} data-agent-ref="@open" data-agent-label={(tab === 'orgs' ? selectedOrg?.name : selected?.name) || 'People'}>
         {tab === 'orgs' ? (
           selectedOrg ? (
             <>
@@ -2182,16 +2210,32 @@ export function PeopleShell({
           )
         ) : selected ? (
           <>
-            <DetailScroll {...contactAgentRefs(selected)}>
-              <Measure>
-                {navStack.length > 0 && (
+            {compact ? (
+              <div className="people-compact-bar">
+                <button
+                  type="button"
+                  className="people-compact-back"
+                  onClick={() => {
+                    setSelectedId(null)
+                    setNavStack([])
+                  }}
+                >
+                  ← All people
+                </button>
+                {/* The rail, which reports failed saves, is hidden while a card is open. */}
+                {saveError ? <QuietAlert role="alert">Could not save: {saveError}. Your change was not confirmed; retry it.</QuietAlert> : null}
+              </div>
+            ) : null}
+            <DetailScroll {...compactPart('scroll')} {...contactAgentRefs(selected)}>
+              <Measure {...compactPart('measure')}>
+                {!compact && navStack.length > 0 && (
                   <BackLink role="button" onClick={goBack}>
                     ← Back
                   </BackLink>
                 )}
-                <CrossAppDragHandle transferKind="contact" label="contact" style={{display:'flex',marginBottom:12}} getContent={()=>({kind:'contact',name:selected.name,emails:selected.emails,phones:selected.phones || [],links:(selected.links || []).map(link=>link.url)})} />
+                <CrossAppDragHandle transferKind="contact" label="contact" style={{display:compact?'none':'flex',marginBottom:12}} getContent={()=>({kind:'contact',name:selected.name,emails:selected.emails,phones:selected.phones || [],links:(selected.links || []).map(link=>link.url)})} />
                 <HeaderBlock>
-                  <HeaderTop>
+                  <HeaderTop {...compactPart('head')}>
                     {selected.avatarUrl ? (
                       <AvatarImg
                         src={selected.avatarUrl}
@@ -2210,7 +2254,7 @@ export function PeopleShell({
                         value={selected.name}
                         empty="Name"
                         serif
-                        size={32}
+                        size={compact ? 24 : 32}
                         color="var(--pp-ink-deep)"
                         onCommit={value => editField('name', value)}
                       />
@@ -2226,10 +2270,11 @@ export function PeopleShell({
                         {selectedContactOrg &&
                         orgKey(selected.org ?? '') !== '' ? (
                           <ValueLink
-                            role="button"
+                            {...compactPart('org-name')}
+                            role={compact ? undefined : 'button'}
                             $size={13.5}
-                            title="Open the org record"
-                            onClick={() => openOrg(selectedContactOrg.id, true)}
+                            title={compact ? undefined : 'Open the org record'}
+                            onClick={compact ? undefined : () => openOrg(selectedContactOrg.id, true)}
                           >
                             {selectedContactOrg.name}
                           </ValueLink>
@@ -2250,13 +2295,13 @@ export function PeopleShell({
                         />
                       </SubLine>
                     </HeaderNameCol>
-                    <HeaderAction role="button" onClick={() => setNetwork({ centerId: selected.id })} title="Who they share threads and meetings with">
+                    <HeaderAction {...compactHide} role="button" onClick={() => setNetwork({ centerId: selected.id })} title="Who they share threads and meetings with">
                       Network
                     </HeaderAction>
-                    <HeaderAction role="button" onClick={() => void requestPhotoResearch()}>
+                    <HeaderAction {...compactHide} role="button" onClick={() => void requestPhotoResearch()}>
                       {selected.avatarUrl ? 'Find better photo' : 'Find photo'}
                     </HeaderAction>
-                    <HeaderAction role="button" onClick={emailSelected}>
+                    <HeaderAction {...compactHide} role="button" onClick={emailSelected}>
                       ✉ Email
                     </HeaderAction>
                   </HeaderTop>
@@ -2276,7 +2321,7 @@ export function PeopleShell({
                   />
                 </HeaderBlock>
 
-                <Rows>
+                <Rows {...compactPart('rows')}>
                   <FieldRow $label={116}>
                     <FieldLabel>Email</FieldLabel>
                     <Column>
@@ -2355,7 +2400,7 @@ export function PeopleShell({
                     />
                   </FieldRow>
 
-                  <FieldRow $label={116}>
+                  <FieldRow $label={116} {...(lists.length === 0 ? compactHide : undefined)}>
                     <FieldLabel>Lists</FieldLabel>
                     <ChipRow>
                       {listsForContact(store, selected).map(list => (
@@ -2400,7 +2445,7 @@ export function PeopleShell({
                   {renderLinksRow(selected.links ?? [], 116)}
                 </Rows>
 
-                <RetainedDetails contact={selected} onEdit={edit => setStore(current => editRetainedDetail(current, selected.id, edit))} onOpenOrg={name => openOrg(name, true)} />
+                <RetainedDetails contact={selected} onEdit={edit => setStore(current => editRetainedDetail(current, selected.id, edit))} onOpenOrg={compact ? undefined : name => openOrg(name, true)} />
 
                 <NotesSection>
                   <NotesHead>
@@ -2421,7 +2466,7 @@ export function PeopleShell({
                 </NotesSection>
               </Measure>
             </DetailScroll>
-            <Footer>
+            <Footer {...compactHide}>
               <FooterMeta>
                 <Action onClick={() => merge.open(selected.id)}>Merge with another person</Action>
                 Seen {selected.seenCount}× · first{' '}
