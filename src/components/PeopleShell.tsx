@@ -1,3 +1,4 @@
+import { useHeldCommand } from '@purescience/platform-ui/bridge/react/heldCommand'
 import { CustomerView } from './customers/CustomerView'
 import { listCustomersHandler, saveCustomerHandler } from '../agents/customerTools'
 import { CrossAppDragHandle } from '@purescience/platform-ui/components/assets/CrossAppDragHandle'
@@ -694,6 +695,15 @@ export function PeopleShell({
     setSelectedId(id)
     setTab('people')
   }
+  // `/open Olivia` from anywhere: the person of that name, or a plain line if there isn't one.
+  useHeldCommand((command, text) => {
+    if (command !== 'show') return { ok: false, say: 'People can’t do that.' }
+    const wanted = text.trim().toLowerCase()
+    const person = storeRef.current.contacts.find(each => each.name.trim().toLowerCase() === wanted) ?? storeRef.current.contacts.find(each => each.name.toLowerCase().includes(wanted))
+    if (!person) return { ok: false, say: `There’s nobody called “${text.trim()}” in People.` }
+    openPerson(person.id)
+    return { ok: true }
+  })
   const openOrg = (idOrName: string, push = false): void => {
     const existing = orgByIdOrName(storeRef.current, idOrName)
     let id = existing?.id ?? orgKey(idOrName)

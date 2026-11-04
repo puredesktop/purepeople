@@ -1,13 +1,15 @@
 import { readFileSync } from 'node:fs'
 import { act } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { afterEach, beforeEach, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { usePlatformAgentTools } from '@purescience/platform-ui/bridge/react/usePlatformAgentTools'
 import { PeopleShell } from './PeopleShell'
 import { contactByIdOrEmail, emptyPeopleStore, upsertContact } from '../lib/contactsModel'
 import { upsertOrg } from '../lib/orgsModel'
 import type { PeopleStore, PeopleUpdate } from '../types'
 
+const heldCommand = vi.hoisted(() => ({ handler: null as null | ((command: string, text: string) => { ok: boolean; say?: string }) }))
+vi.mock('@purescience/platform-ui/bridge/react/heldCommand', () => ({ useHeldCommand: (handler: typeof heldCommand.handler) => { heldCommand.handler = handler } }))
 vi.mock('@purescience/platform-ui/bridge/react/usePlatformAgentTools', () => ({ usePlatformAgentTools: vi.fn() }))
 vi.mock('../lib/peopleBridge', () => ({
   askDrawer: vi.fn(),
@@ -203,4 +205,15 @@ it('every compact style starts from the attribute, so none can apply with compac
       } else part += char
     }
   }
+})
+
+describe('/open someone', () => {
+  it('shows the person of that name, and says when there is no one', async () => {
+    const store = people()
+    const name = store.contacts[0]!.name
+    await render(store, vi.fn() as unknown as PeopleUpdate)
+    expect(heldCommand.handler!('show', name.toLowerCase())).toEqual({ ok: true })
+    expect(heldCommand.handler!('show', 'Nobody at all')).toMatchObject({ ok: false, say: expect.stringContaining('Nobody') })
+    expect(heldCommand.handler!('other', '')).toMatchObject({ ok: false })
+  })
 })
