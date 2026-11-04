@@ -198,7 +198,7 @@ it('every compact style starts from the attribute, so none can apply with compac
       if (char === '(') depth += 1
       if (char === ')') depth -= 1
       if (char === ',' && depth === 0) {
-        expect(part.trim()).toMatch(/^(\[data-compact-room\]|html\[data-held-in-room\])/)
+        expect(part.trim()).toMatch(/^(\[data-compact-room\]|html:has\(\[data-compact-room\]\))/)
         part = ''
       } else part += char
     }

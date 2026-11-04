@@ -1,5 +1,5 @@
 /* Compact PurePeople, for the Executive room (useCompactInRoom). The frame carries data-compact-room only then, and
-   every rule here starts from it, or from html[data-held-in-room] which only a nested frame has. Chrome is hidden, not
+   every rule here starts from it, or from html:has() of it. Chrome is hidden, not
    removed: everything stays mounted, so state and agent tools stay alive. */
 
 /* The app header: wordmark, share, assistant controls. Full app gives them back. */
@@ -123,15 +123,15 @@
   text-decoration: none;
 }
 
-/* Held inside an entry of the room: one surface, flat on the paper, square edges, no second card. It is always a
+/* Held inside a page (a room entry, or the Personal page): one surface, flat on the paper, square edges, no second card. It is always a
    white ground, so the ink is set to match whatever theme the desktop is in. Tokens set at :root were resolved there,
    so the roles are restated here rather than derived. */
-html[data-held-in-room],
-html[data-held-in-room] body {
+html:has([data-compact-room]),
+html:has([data-compact-room]) body {
   background: #ffffff !important;
 }
-html[data-held-in-room],
-html[data-held-in-room] [data-compact-room] {
+html:has([data-compact-room]),
+[data-compact-room] {
   color-scheme: light;
   color: #1f2328;
   background: #ffffff;
@@ -150,7 +150,7 @@ html[data-held-in-room] [data-compact-room] {
   --pure-chrome-muted: #6b7178;
   --pure-chrome-soft: #4b5158;
   --pure-chrome-radius: 0;
-  --pure-chrome-accent: oklch(from var(--app-acc, var(--platform-colors-accent)) 0.5 c h);
+  --pure-chrome-accent: #2f5d8c; /* the held look's one muted accent, not the app's plum */
   --pure-chrome-on-accent: #ffffff;
   --pp-paper: #f3f4f6;
   --pp-paper-raised: #f7f8f9;
@@ -192,24 +192,24 @@ html[data-held-in-room] [data-compact-room] {
   --pp-warn: #c08a3e;
   --pp-shadow: rgba(40, 34, 30, 0.3);
 }
-html[data-held-in-room] [data-compact-room] [data-compact-part='search'] > input {
+[data-compact-room] [data-compact-part='search'] > input {
   background: #ffffff;
 }
-html[data-held-in-room] [data-compact-room] [data-compact-view] {
+[data-compact-room] [data-compact-view] {
   gap: 0;
   padding: 0;
   background: #ffffff;
 }
-html[data-held-in-room] [data-compact-room] [data-compact-part='rail'][data-chrome],
-html[data-held-in-room] [data-compact-room] [data-compact-part='detail'] {
+[data-compact-room] [data-compact-part='rail'][data-chrome],
+[data-compact-room] [data-compact-part='detail'] {
   border: 0;
   border-radius: 0;
   box-shadow: none;
   background: #ffffff;
 }
-html[data-held-in-room] [data-compact-room] [data-compact-part='rail'] [data-chrome='list-row'] {
+[data-compact-room] [data-compact-part='rail'] [data-chrome='list-row'] {
   border-radius: 0;
 }
-html[data-held-in-room] [data-compact-room] [data-compact-part='rows'] > * {
+[data-compact-room] [data-compact-part='rows'] > * {
   border-radius: 0;
 }
