@@ -12,6 +12,7 @@ import { Action } from './common/RecordControls'
 import { editRetainedDetail } from '../lib/contactDetails'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { createGlobalStyle, styled } from 'styled-components'
+import { quietLabel } from '../ui/styles'
 import { usePlatformAgentTools } from '@purescience/platform-ui/bridge/react/usePlatformAgentTools'
 import { usePlatformBridge } from '@purescience/platform-ui/bridge/react/usePlatformBridge'
 import { usePlatformViewportResource } from '@purescience/platform-ui/bridge/react/usePlatformViewportResource'
@@ -2479,9 +2480,11 @@ export function PeopleShell({
             <Footer {...compactHide}>
               <FooterMeta>
                 <Action onClick={() => merge.open(selected.id)}>Merge with another person</Action>
-                Seen {selected.seenCount}× · first{' '}
-                {fmtDate(selected.firstSeenAt)} · last{' '}
-                {fmtDate(selected.lastSeenAt)}
+                <span>
+                  Seen {selected.seenCount}× · first{' '}
+                  {fmtDate(selected.firstSeenAt)} · last{' '}
+                  {fmtDate(selected.lastSeenAt)}
+                </span>
               </FooterMeta>
               <SourceChips>
                 {selected.sources.map(source => (
@@ -2634,9 +2637,9 @@ const PeopleTokens = createGlobalStyle`
       var(--platform-colors-text)
     );
     --pp-on-solid: var(--pure-chrome-on-accent);
-    --pp-plum: #8d4b63;
-    --pp-plum-deep: #6d374a;
-    --pp-warn: #c08a3e;
+    --pp-plum: var(--p-text);
+    --pp-plum-deep: var(--p-deep);
+    --pp-warn: var(--b-amber);
     --pp-shadow: rgba(40, 34, 30, 0.3);
     --pp-shadow-deep: rgba(0, 0, 0, 0.4);
     --pp-scrim: rgba(30, 28, 26, 0.55);
@@ -2645,9 +2648,6 @@ const PeopleTokens = createGlobalStyle`
 
   :root[data-platform-theme='dark'] {
     --pp-card: color-mix(in srgb, var(--pure-chrome-paper) 88%, transparent);
-    --pp-plum: #c687a0;
-    --pp-plum-deep: #d6a4b8;
-    --pp-warn: #b98936;
     --pp-shadow: rgba(0, 0, 0, 0.45);
     --pp-shadow-deep: rgba(0, 0, 0, 0.6);
     --pp-scrim: rgba(8, 8, 10, 0.62);
@@ -2661,10 +2661,10 @@ const Root = styled.div`
   height: 100%;
   min-height: 0;
   box-sizing: border-box;
-  gap: 12px;
-  padding: 10px 12px 12px;
+  gap: 0;
+  padding: 0;
   overflow: hidden;
-  background: transparent;
+  background: var(--n-sheet);
   color: var(--pp-ink);
   font-family: ${SANS};
   -webkit-font-smoothing: antialiased;
@@ -2688,10 +2688,11 @@ const Rail = styled.div.attrs(chrome('sidebar'))`
     flex-basis: clamp(320px, 24vw, 380px);
     width: clamp(320px, 24vw, 380px);
     overflow: hidden;
-    background: var(--pp-panel-strong);
-    border: 1px solid var(--pp-glass-edge);
-    border-radius: 18px;
-    box-shadow: var(--pp-glass-shadow);
+    background: var(--n-sheet);
+    border: 0;
+    border-right: 1px solid var(--n-line);
+    border-radius: 0;
+    box-shadow: none;
   }
 
   @media (max-width: 960px) {
@@ -2792,7 +2793,7 @@ const SortMenu = styled.div`
   min-width: 140px;
   background: var(--pp-popover);
   border: 1px solid var(--pp-glass-edge-strong);
-  border-radius: 10px;
+  border-radius: var(--pure-chrome-radius, 3px);
   box-shadow: 0 8px 24px -12px var(--pp-shadow);
   backdrop-filter: var(--pp-glass-blur);
   -webkit-backdrop-filter: var(--pp-glass-blur);
@@ -2804,7 +2805,7 @@ const SortMenuItem = styled.div<{ $active: boolean }>`
   font-size: var(--pure-chrome-ui-size);
   color: ${({ $active }) => ($active ? 'var(--pp-ink-deep)' : 'var(--pp-text-strong)')};
   font-weight: ${({ $active }) => ($active ? 600 : 400)};
-  border-radius: 4px;
+  border-radius: var(--pure-chrome-radius, 3px);
   cursor: pointer;
 
   &:hover {
@@ -2840,12 +2841,13 @@ const RailRow = styled.div.attrs(chrome('list-row'))<{ $active?: boolean }>`
     align-items: baseline;
     gap: 10px;
     padding: 7px var(--pure-chrome-inset);
-    background: ${({ $active }) =>
-      $active ? 'var(--pure-chrome-selection)' : 'transparent'};
+    background: ${({ $active }) => ($active ? 'var(--p-chosen)' : 'transparent')};
+    box-shadow: ${({ $active }) => ($active ? 'var(--p-chosen-edge)' : 'none')};
+    border-radius: 0;
   }
 
   &&:hover {
-    background: var(--pure-chrome-hover);
+    background: ${({ $active }) => ($active ? 'var(--p-chosen)' : 'var(--n-hover)')};
   }
 `
 
@@ -2892,7 +2894,7 @@ const CountBadge = styled.span.attrs(chrome('meta'))`
 const TypeBadge = styled.span.attrs(chrome('meta'))`
   flex: none;
   background: var(--pp-wash);
-  border-radius: 4px;
+  border-radius: var(--pure-chrome-radius, 3px);
   padding: 1px 6px;
 `
 
@@ -2904,7 +2906,7 @@ const StaleHeader = styled.div`
   padding: 16px var(--pure-chrome-inset) 8px;
 
   span {
-    font-family: var(--platform-typography-font-family-mono);
+    font-family: var(--platform-typography-font-family);
     font-size: var(--pure-chrome-label-size);
     font-weight: 500;
     letter-spacing: var(--pure-chrome-label-tracking);
@@ -2931,7 +2933,7 @@ const ImportPanel = styled.div`
   color: var(--pp-text-strong);
   background: var(--pp-paper-raised);
   border: 1px solid var(--pp-wash-strong);
-  border-radius: 6px;
+  border-radius: var(--pure-chrome-radius, 3px);
 `
 
 const ImportActions = styled.div`
@@ -2946,7 +2948,7 @@ const ImportButton = styled.button`
   color: var(--pp-on-solid);
   background: var(--pp-accent-solid);
   border: none;
-  border-radius: 5px;
+  border-radius: var(--pure-chrome-radius, 3px);
   padding: 4px 10px;
   cursor: pointer;
 
@@ -2962,10 +2964,10 @@ const Detail = styled.div`
   flex-direction: column;
   min-height: 0;
   overflow: hidden;
-  background: var(--pp-panel);
-  border: 1px solid var(--pp-glass-edge);
-  border-radius: 18px;
-  box-shadow: var(--pp-glass-shadow);
+  background: var(--n-sheet);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 `
 
 const DetailScroll = styled.div`
@@ -3111,26 +3113,18 @@ const ChipRow = styled.div`
   align-items: center;
 `
 
+/** A tag on a person: a flat label, its mark in People's colour, never a pill. */
 const TagChip = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--pure-chrome-ui-size);
-  color: var(--pp-accent);
-  background: var(--pp-green-wash);
-  border-radius: 999px;
-  padding: 3px 9px;
+  ${quietLabel}
+  --lab-colour: var(--p-text);
+  height: 20px;
+  font-size: 12px;
 `
 
 const TopicChip = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--pure-chrome-ui-size);
-  color: var(--pp-text-strong);
-  background: var(--pp-paper);
-  border-radius: 4px;
-  padding: 2px 7px;
+  ${quietLabel}
+  height: 20px;
+  font-size: 12px;
 `
 
 const ChipX = styled.span`
@@ -3161,11 +3155,16 @@ const ListChip = styled.button<{ $active: boolean }>`
   align-items: baseline;
   gap: 5px;
   max-width: 100%;
-  padding: 3px 9px;
-  border: 1px solid ${({ $active }) => ($active ? 'var(--pp-accent)' : 'var(--pp-line)')};
-  border-radius: 999px;
-  background: ${({ $active }) => ($active ? 'var(--pp-green-wash)' : 'transparent')};
-  color: ${({ $active }) => ($active ? 'var(--pp-accent-text)' : 'var(--pp-text-strong)')};
+  height: 24px;
+  padding: 0 8px;
+  align-items: center;
+  border: 1px solid var(--n-btn-line);
+  border-bottom-color: var(--n-btn-foot);
+  border-radius: 3px;
+  background: ${({ $active }) => ($active ? 'var(--n-selected)' : 'var(--n-sheet)')};
+  box-shadow: ${({ $active }) => ($active ? 'inset 0 1px 2px rgb(0 0 0 / 0.12)' : '0 1px 1px rgb(0 0 0 / 0.08)')};
+  color: var(--n-ink);
+  font-weight: ${({ $active }) => ($active ? 600 : 500)};
   font: inherit;
   font-size: var(--pure-chrome-ui-size);
   cursor: pointer;
@@ -3194,9 +3193,9 @@ const ListHint = styled.span.attrs(chrome('meta'))``
 const AddChip = styled.span`
   font-size: var(--pure-chrome-ui-size);
   color: var(--pp-muted);
-  border: 1px dashed var(--pp-line);
-  border-radius: 999px;
-  padding: 3px 9px;
+  border: 0;
+  border-radius: 0;
+  padding: 3px 2px;
   cursor: pointer;
   transition: color 120ms ease, border-color 120ms ease;
 
@@ -3212,7 +3211,7 @@ const ChipInput = styled.input`
   color: var(--pp-ink);
   background: var(--pp-card);
   border: 1px solid var(--pp-line-strong);
-  border-radius: 5px;
+  border-radius: var(--pure-chrome-radius, 3px);
   padding: 3px 7px;
   outline: none;
 `
@@ -3229,7 +3228,7 @@ const FieldRow = styled.div<{ $label: number }>`
   padding: 11px 10px;
   margin: 0 -10px;
   border-top: 1px solid var(--pp-wash-deep);
-  border-radius: 6px;
+  border-radius: var(--pure-chrome-radius, 3px);
   transition: background 120ms ease;
 
   &:last-child {
@@ -3376,13 +3375,12 @@ const ReviewLink = styled.span`
 `
 
 const WarnBadge = styled.span.attrs(chrome('meta'))`
-  background: var(--pp-warn);
-  border-radius: 999px;
+  background: var(--b-amber);
+  border-radius: 2px;
   padding: 1px 6px;
-  font-variant-numeric: tabular-nums;
 
   && {
-    color: var(--pp-on-solid);
+    color: var(--b-on-amber);
   }
 `
 
@@ -3392,7 +3390,7 @@ const PersonNavRow = styled.div`
   gap: 9px;
   padding: 4px 6px;
   margin: 0 -6px;
-  border-radius: 6px;
+  border-radius: var(--pure-chrome-radius, 3px);
   cursor: pointer;
   transition: background 120ms ease;
 
@@ -3436,7 +3434,7 @@ const PhotoMenu = styled.div`
   flex-direction: column;
   background: var(--pp-popover);
   border: 1px solid var(--pp-glass-edge-strong);
-  border-radius: 10px;
+  border-radius: var(--pure-chrome-radius, 3px);
   box-shadow: 0 8px 24px -12px var(--pp-shadow);
   backdrop-filter: var(--pp-glass-blur);
   -webkit-backdrop-filter: var(--pp-glass-blur);
@@ -3448,7 +3446,7 @@ const PhotoMenuItem = styled.div`
   padding: 5px 10px;
   font-size: var(--pure-chrome-ui-size);
   color: var(--pp-text-strong);
-  border-radius: 4px;
+  border-radius: var(--pure-chrome-radius, 3px);
   cursor: pointer;
 
   &:hover {
@@ -3517,17 +3515,20 @@ const Footer = styled.div`
   gap: 16px;
 `
 
-const FooterMeta = styled.div.attrs(chrome('meta'))``
+const FooterMeta = styled.div.attrs(chrome('meta'))`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`
 
 const SourceChips = styled.div`
   display: flex;
   gap: 5px;
 `
 
-const SourceChip = styled.span.attrs(chrome('meta'))`
-  background: var(--pp-wash);
-  border-radius: 4px;
-  padding: 2px 6px;
+/** Where the person was first seen (mail, import): a quiet label. */
+const SourceChip = styled.span`
+  ${quietLabel}
 `
 
 const DeleteLink = styled.span<{ $armed: boolean }>`
@@ -3570,6 +3571,6 @@ const Lightbox = styled.div`
 const LightboxImg = styled.img`
   max-width: min(88vw, 720px);
   max-height: 82vh;
-  border-radius: 10px;
+  border-radius: var(--pure-chrome-radius, 3px);
   box-shadow: 0 18px 60px var(--pp-shadow-deep);
 `
