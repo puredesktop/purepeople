@@ -457,6 +457,8 @@ export function PeopleShell({
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<SortMode>('lastSeen')
   const [sortMenuOpen, setSortMenuOpen] = useState(false)
+  const [listMenuOpen, setListMenuOpen] = useState(false)
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [selectedOrgId, setSelectedOrgId] = useState<string | null>(null)
   /** An event board over the app: a list or a search, laid out to prepare for meeting its people. */
@@ -1409,79 +1411,176 @@ export function PeopleShell({
       <PeopleTokens />
       <Rail {...compactPart('rail')}>
         <RailTabs {...compactHide}>
-          <RailTab $active={tab === 'people'} onClick={() => setTab('people')}>
+          <RailTab role="tab" aria-selected={tab === 'people'} $active={tab === 'people'} onClick={() => setTab('people')}>
             <span>People</span>
             <TabCount $active={tab === 'people'}>
               {store.contacts.length}
             </TabCount>
           </RailTab>
-          <RailTab $active={tab === 'orgs'} onClick={() => setTab('orgs')}>
+          <RailTab role="tab" aria-selected={tab === 'orgs'} $active={tab === 'orgs'} onClick={() => setTab('orgs')}>
             <span>Orgs</span>
             <TabCount $active={tab === 'orgs'}>
               {storeOrgs(store).length}
             </TabCount>
           </RailTab>
+          <RailTab role="tab" aria-selected={false} $active={false} onClick={() => { flushNow(); setTab('people'); setCustomersOpen(true) }}>
+            <span>Customers</span>
+          </RailTab>
           <TabSpacer />
-          <NewLink role="button" tabIndex={0} onClick={() => setNewDraft('')}>
-            {tab === 'orgs' ? 'New organisation' : 'New person'}
-          </NewLink>
         </RailTabs>
 
-        {tab === 'people' && (
-          <ListBar {...compactHide}>
-            <ListChip
-              $active={activeListId === null}
-              onClick={() => setActiveListId(null)}
-            >
-              Everyone
-              <ListCount>{store.contacts.length}</ListCount>
-            </ListChip>
-            {lists.map(list => (
-              <ListChip
-                key={list.id}
-                {...listAgentRefs(list)}
-                $active={activeListId === list.id}
-                title={list.name}
-                onClick={() =>
-                  setActiveListId(current =>
-                    current === list.id ? null : list.id,
+
+
+        <RailHead {...compactPart('search')} {...(store.contacts.length === 0 && newDraft === null ? compactHide : undefined)}>
+          <SearchLine>
+          {newDraft !== null ? (
+            <SearchInput
+              autoFocus
+              placeholder={
+                tab === 'orgs' ? 'New organisation name' : 'email@example.com'
+              }
+              value={newDraft}
+              onChange={event => setNewDraft(event.currentTarget.value)}
+              onBlur={() => setNewDraft(null)}
+              onKeyDown={event => {
+                if (event.key === 'Escape') setNewDraft(null)
+                if (event.key !== 'Enter') return
+                const value = newDraft.trim()
+                if (!value) return
+                if (tab === 'orgs') {
+                  openOrg(value)
+                } else {
+                  if (!value.includes('@')) return
+                  const email = value.toLowerCase()
+                  setStore(
+                    current => upsertContact(current, { email }, 'user').store,
+                    () => setSelectedId(email),
                   )
                 }
-              >
-                {list.name}
-                <ListCount>{counts.get(list.id) ?? 0}</ListCount>
-              </ListChip>
-            ))}
-            {newListOpen ? (
-              <ChipInput
-                autoFocus
-                placeholder="List name"
-                value={newListDraft}
-                onChange={event => setNewListDraft(event.currentTarget.value)}
-                onBlur={() => {
-                  createListNamed(newListDraft)
+                setNewDraft(null)
+              }}
+            />
+          ) : (
+            <SearchInput
+              placeholder={
+                compact
+                  ? 'Search people'
+                  : tab === 'orgs'
+                  ? 'Search orgs, industries, domains'
+                  : activeList
+                    ? `Search ${activeList.name}`
+                    : 'Search people, orgs, tags'
+              }
+              value={query}
+              onChange={event => setQuery(event.currentTarget.value)}
+            />
+          )}
+          {!compact && newDraft === null ? (
+            <NewLink {...compactHide} role="button" tabIndex={0} onClick={() => setNewDraft('')}>
+              {tab === 'orgs' ? 'New org' : 'New person'}
+            </NewLink>
+          ) : null}
+          </SearchLine>
+          {compact && newDraft === null ? (
+            <button type="button" className="people-compact-new" onClick={() => setNewDraft('')}>
+              + New person
+            </button>
+          ) : null}
+          {tab === 'people' && newListOpen ? (
+            <ChipInput
+              autoFocus
+              placeholder="List name"
+              value={newListDraft}
+              onChange={event => setNewListDraft(event.currentTarget.value)}
+              onBlur={() => {
+                createListNamed(newListDraft)
+                setNewListOpen(false)
+              }}
+              onKeyDown={event => {
+                if (event.key === 'Escape') {
+                  setNewListDraft('')
                   setNewListOpen(false)
-                }}
-                onKeyDown={event => {
-                  if (event.key === 'Escape') {
-                    setNewListDraft('')
-                    setNewListOpen(false)
-                  }
-                  if (event.key === 'Enter') createListNamed(newListDraft)
-                }}
-              />
-            ) : (
-              <AddChip
-                role="button"
-                tabIndex={0}
-                onClick={() => setNewListOpen(true)}
-              >
-                + list
-              </AddChip>
-            )}
-          </ListBar>
-        )}
-
+                }
+                if (event.key === 'Enter') createListNamed(newListDraft)
+              }}
+            />
+          ) : null}
+          <SortRow {...compactHide}>
+            {tab === 'people' ? (
+              <>
+                <SortChipWrap>
+                  <SortChip role="button" aria-label="Choose a list" aria-haspopup="menu" {...(activeList ? listAgentRefs(activeList) : {})} onClick={() => { setListMenuOpen(open => !open); setSortMenuOpen(false); setMoreMenuOpen(false) }}>
+                    {activeList ? activeList.name : 'Everyone'}
+                    <ListCount>{activeList ? counts.get(activeList.id) ?? 0 : store.contacts.length}</ListCount>
+                    <Chevron />
+                  </SortChip>
+                  {listMenuOpen ? (
+                    <SortMenu role="menu">
+                      <SortMenuItem role="menuitem" $active={activeListId === null} onClick={() => { setActiveListId(null); setListMenuOpen(false) }}>
+                        Everyone <ListCount>{store.contacts.length}</ListCount>
+                      </SortMenuItem>
+                      {lists.map(list => (
+                        <SortMenuItem role="menuitem" key={list.id} {...listAgentRefs(list)} $active={activeListId === list.id} onClick={() => { setActiveListId(list.id); setListMenuOpen(false) }}>
+                          {list.name} <ListCount>{counts.get(list.id) ?? 0}</ListCount>
+                        </SortMenuItem>
+                      ))}
+                      <SortMenuItem role="menuitem" $active={false} onClick={() => { setNewListOpen(true); setListMenuOpen(false) }}>
+                        New list…
+                      </SortMenuItem>
+                    </SortMenu>
+                  ) : null}
+                </SortChipWrap>
+              </>
+            ) : null}
+            <SortChipWrap>
+              <SortChip onClick={() => { setSortMenuOpen(open => !open); setListMenuOpen(false); setMoreMenuOpen(false) }}>
+                Sort: {SORT_LABELS[sort]}
+                <Chevron />
+              </SortChip>
+              {sortMenuOpen ? (
+                <SortMenu role="menu">
+                  {(Object.keys(SORT_LABELS) as SortMode[]).map(mode => (
+                    <SortMenuItem role="menuitem"
+                      key={mode}
+                      $active={mode === sort}
+                      onClick={() => {
+                        setSort(mode)
+                        setSortMenuOpen(false)
+                      }}
+                    >
+                      {SORT_LABELS[mode]}
+                    </SortMenuItem>
+                  ))}
+                </SortMenu>
+              ) : null}
+            </SortChipWrap>
+            <TabSpacer />
+            <SortChipWrap>
+              <MoreButton role="button" tabIndex={0} aria-label="More" aria-haspopup="menu" title="More" onClick={() => { setMoreMenuOpen(open => !open); setSortMenuOpen(false); setListMenuOpen(false) }}>
+                ⋯
+              </MoreButton>
+              {moreMenuOpen ? (
+                <SortMenu role="menu" $right>
+                  {tab === 'people' && (activeList || query.trim()) ? (
+                    <SortMenuItem role="menuitem"
+                      $active={false}
+                      title="See everyone here as faces, star who to meet, and prepare"
+                      onClick={() => { setMoreMenuOpen(false); setBoard(activeList ? { kind: 'list', listId: activeList.id } : { kind: 'search', query: query.trim() }) }}
+                    >
+                      Open as board
+                    </SortMenuItem>
+                  ) : null}
+                  <SortMenuItem role="menuitem" $active={false} onClick={() => { setMoreMenuOpen(false); csvFileRef.current?.click() }}>
+                    Import from a spreadsheet (CSV)…
+                  </SortMenuItem>
+                  <SortMenuItem role="menuitem" $active={false} onClick={() => { setMoreMenuOpen(false); exportCsv() }}>
+                    Export to a spreadsheet (CSV)
+                  </SortMenuItem>
+                </SortMenu>
+              ) : null}
+            </SortChipWrap>
+          </SortRow>
+        </RailHead>
         {activeList ? (
           <ListToolRow {...compactHide}>
             {listEditOpen ? (
@@ -1536,101 +1635,6 @@ export function PeopleShell({
             )}
           </ListToolRow>
         ) : null}
-
-        <RailHead {...compactPart('search')} {...(store.contacts.length === 0 && newDraft === null ? compactHide : undefined)}>
-          <Action {...compactHide} onClick={() => { flushNow(); setTab('people'); setCustomersOpen(true) }}>Customers</Action>
-          {newDraft !== null ? (
-            <SearchInput
-              autoFocus
-              placeholder={
-                tab === 'orgs' ? 'New organisation name' : 'email@example.com'
-              }
-              value={newDraft}
-              onChange={event => setNewDraft(event.currentTarget.value)}
-              onBlur={() => setNewDraft(null)}
-              onKeyDown={event => {
-                if (event.key === 'Escape') setNewDraft(null)
-                if (event.key !== 'Enter') return
-                const value = newDraft.trim()
-                if (!value) return
-                if (tab === 'orgs') {
-                  openOrg(value)
-                } else {
-                  if (!value.includes('@')) return
-                  const email = value.toLowerCase()
-                  setStore(
-                    current => upsertContact(current, { email }, 'user').store,
-                    () => setSelectedId(email),
-                  )
-                }
-                setNewDraft(null)
-              }}
-            />
-          ) : (
-            <SearchInput
-              placeholder={
-                compact
-                  ? 'Search people'
-                  : tab === 'orgs'
-                  ? 'Search orgs, industries, domains'
-                  : activeList
-                    ? `Search ${activeList.name}`
-                    : 'Search people, orgs, tags'
-              }
-              value={query}
-              onChange={event => setQuery(event.currentTarget.value)}
-            />
-          )}
-          {compact && newDraft === null ? (
-            <button type="button" className="people-compact-new" onClick={() => setNewDraft('')}>
-              + New person
-            </button>
-          ) : null}
-          <SortRow {...compactHide}>
-            <SortLabel>Sort</SortLabel>
-            <SortChipWrap>
-              <SortChip onClick={() => setSortMenuOpen(open => !open)}>
-                {SORT_LABELS[sort]}
-                <Chevron />
-              </SortChip>
-              {sortMenuOpen ? (
-                <SortMenu>
-                  {(Object.keys(SORT_LABELS) as SortMode[]).map(mode => (
-                    <SortMenuItem
-                      key={mode}
-                      $active={mode === sort}
-                      onClick={() => {
-                        setSort(mode)
-                        setSortMenuOpen(false)
-                      }}
-                    >
-                      {SORT_LABELS[mode]}
-                    </SortMenuItem>
-                  ))}
-                </SortMenu>
-              ) : null}
-            </SortChipWrap>
-            <TabSpacer />
-            {tab === 'people' && (activeList || query.trim()) ? (
-              <QuietLink
-                role="button"
-                title="See everyone here as faces, star who to meet, and prepare"
-                onClick={() => setBoard(activeList ? { kind: 'list', listId: activeList.id } : { kind: 'search', query: query.trim() })}
-              >
-                Open as board
-              </QuietLink>
-            ) : null}
-            <QuietLink
-              role="button"
-              onClick={() => csvFileRef.current?.click()}
-            >
-              Import
-            </QuietLink>
-            <QuietLink role="button" onClick={exportCsv}>
-              Export
-            </QuietLink>
-          </SortRow>
-        </RailHead>
         <HiddenFileInput
           ref={csvFileRef}
           type="file"
@@ -2609,15 +2613,16 @@ const PeopleTokens = createGlobalStyle`
     --pp-wash-strong: var(--pure-chrome-line);
     --pp-chip: var(--pure-chrome-well);
     --pp-chip-text: var(--pure-chrome-soft);
-    --pp-card: color-mix(in srgb, var(--pure-chrome-paper) 92%, transparent);
-    --pp-panel: var(--glass-panel);
-    --pp-panel-strong: var(--glass-panel-strong);
-    --pp-popover: var(--glass-popover);
-    --pp-glass-edge: var(--glass-edge);
-    --pp-glass-edge-strong: var(--glass-edge-strong);
-    --pp-glass-line: var(--glass-line);
-    --pp-glass-blur: var(--glass-blur);
-    --pp-glass-shadow: var(--glass-shadow);
+    /* Panels, cards and menus are the neutral sheet (ui/styles.ts), never the desk's warm glass. */
+    --pp-card: var(--n-sheet);
+    --pp-panel: var(--n-sheet);
+    --pp-panel-strong: var(--n-sheet);
+    --pp-popover: var(--n-sheet);
+    --pp-glass-edge: var(--n-line);
+    --pp-glass-edge-strong: var(--n-strong);
+    --pp-glass-line: var(--n-line);
+    --pp-glass-blur: none;
+    --pp-glass-shadow: 0 2px 8px rgb(0 0 0 / 0.14);
     --pp-green-wash: var(--pure-chrome-selection);
     --pp-green-wash-deep: var(--pure-chrome-hover);
     --pp-line: var(--pure-chrome-line);
@@ -2651,7 +2656,6 @@ const PeopleTokens = createGlobalStyle`
   }
 
   :root[data-platform-theme='dark'] {
-    --pp-card: color-mix(in srgb, var(--pure-chrome-paper) 88%, transparent);
     --pp-shadow: rgba(0, 0, 0, 0.45);
     --pp-shadow-deep: rgba(0, 0, 0, 0.6);
     --pp-scrim: rgba(8, 8, 10, 0.62);
@@ -2744,15 +2748,31 @@ const TabSpacer = styled.div`
   flex: 1;
 `
 
-/** The one main action of the list: People's colour, solid, a button that says what it makes. */
+/** The one main action of the list: People's colour, solid, a button that says what it makes, beside the search. */
 const NewLink = styled.span`
   ${quiet}
   ${primaryLook}
-  align-self: center;
-  margin-bottom: 9px;
-  height: 26px;
-  padding: 0 10px;
-  font-size: 12.5px;
+  flex: none;
+  height: 30px;
+`
+
+/** The search and the list's main action, on one line. */
+const SearchLine = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+
+  > input { flex: 1; min-width: 0; }
+`
+
+/** Rarer actions (import, export, open as board) under one always-visible button, at the line's right edge. */
+const MoreButton = styled.span`
+  ${quiet}
+  width: 28px;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1;
 `
 
 const RailHead = styled.div`
@@ -2783,16 +2803,19 @@ const SortChipWrap = styled.div`
 
 const SortChip = styled.div.attrs(chrome('toolbar-select'))`
   cursor: pointer;
+  white-space: nowrap;
 
   &:hover {
     background: var(--pure-chrome-hover);
   }
 `
 
-const SortMenu = styled.div`
+const SortMenu = styled.div<{ $right?: boolean }>`
   position: absolute;
   top: calc(100% + 4px);
-  left: 0;
+  left: ${({ $right }) => ($right ? 'auto' : '0')};
+  right: ${({ $right }) => ($right ? '0' : 'auto')};
+  white-space: nowrap;
   z-index: 10;
   min-width: 140px;
   background: var(--pp-popover);
@@ -2852,6 +2875,11 @@ const RailRow = styled.div.attrs(chrome('list-row'))<{ $active?: boolean }>`
 
   &&:hover {
     background: ${({ $active }) => ($active ? 'var(--p-chosen)' : 'var(--n-hover)')};
+  }
+
+  /* Names start on the same edge as the search and drop-downs above them. */
+  :root:root body && {
+    padding-inline: var(--pure-chrome-inset);
   }
 `
 

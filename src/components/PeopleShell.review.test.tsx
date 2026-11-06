@@ -57,12 +57,15 @@ it('opens the deferred board and network while retaining the contact rail', asyn
   try {
     await act(async () => root.render(<PeopleShell store={store} update={update} />))
     expect(host.querySelector('[role="dialog"]')).toBeNull()
-    await clickText('button', 'QA List1')
-    await clickText('[role="button"]', 'Open as board')
+    await clickText('[aria-label="Choose a list"]', 'Everyone1')
+    await clickText('[role="menuitem"]', 'QA List 1')
+    await clickText('[aria-label="More"]', '⋯')
+    await clickText('[role="menuitem"]', 'Open as board')
     await loaded('QA List board')
-    // The activity layer's tags reach real elements: the list chip, the rail row, the board and its cards.
+    // The activity layer's tags reach real elements: the open list's chooser, the rail row, the board and its cards.
     const tagged = (ref: string) => [...host.querySelectorAll('[data-agent-ref]')].filter(el => el.getAttribute('data-agent-ref')!.split(' ').includes(ref))
-    expect(tagged('list:qa-list').map(el => el.tagName)).toEqual(expect.arrayContaining(['BUTTON', 'SECTION']))
+    expect(tagged('list:qa-list').some(el => el.getAttribute('aria-label') === 'Choose a list')).toBe(true)
+    expect(tagged('list:qa-list').map(el => el.tagName)).toContain('SECTION')
     expect(tagged('contact:qa@example.org').length).toBeGreaterThanOrEqual(3)
     await act(async () => host.querySelector<HTMLButtonElement>('[aria-label="Close board"]')!.click())
     const name = [...host.querySelectorAll('div')].find(el => el.textContent === 'QA Person')!
