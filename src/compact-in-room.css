@@ -1,3 +1,12 @@
+/* Follows the desk's theme: each colour is light-dark(its light value, its dark partner), the dark ones the held greys
+   of docs/held-apps.md. A light theme leaves the colour scheme as it was; a dark one says dark, and parts that asked
+   for light take --held-scheme instead. */
+[data-compact-room]:is([data-platform-theme='dark'] *),
+html:has([data-compact-room])[data-platform-theme='dark'] {
+  color-scheme: dark;
+  --held-scheme: dark;
+}
+
 /* Compact PurePeople, for the Executive room (useCompactInRoom). The frame carries data-compact-room only then, and
    every rule here starts from it, or from html:has() of it. Chrome is hidden, not
    removed: everything stays mounted, so state and agent tools stay alive. */
@@ -128,84 +137,84 @@
    so the roles are restated here rather than derived. */
 html:has([data-compact-room]),
 html:has([data-compact-room]) body {
-  background: #ffffff !important;
+  background: light-dark(#ffffff, #1c1c1c) !important;
 }
 html:has([data-compact-room]),
 [data-compact-room] {
-  color-scheme: light;
-  color: #1f2328;
-  background: #ffffff;
-  --platform-colors-text: #1f2328;
-  --platform-colors-text-secondary: #4b5158;
-  --platform-colors-text-disabled: #9aa0a6;
-  --platform-colors-border-strong: #c9ced4;
-  --pure-chrome-sidebar: #ffffff;
-  --pure-chrome-surface: #ffffff;
-  --pure-chrome-paper: #ffffff;
-  --pure-chrome-well: #f3f4f6;
-  --pure-chrome-hover: #f5f6f7;
-  --pure-chrome-selection: #eef0f3;
-  --pure-chrome-line: #e4e6e9;
-  --pure-chrome-fence: #eef0f2;
-  --pure-chrome-muted: #6b7178;
-  --pure-chrome-soft: #4b5158;
+  color-scheme: var(--held-scheme, light);
+  color: light-dark(#1f2328, #ededed);
+  background: light-dark(#ffffff, #1c1c1c);
+  --platform-colors-text: light-dark(#1f2328, #ededed);
+  --platform-colors-text-secondary: light-dark(#4b5158, #bdbdbd);
+  --platform-colors-text-disabled: light-dark(#9aa0a6, #5c5c5c);
+  --platform-colors-border-strong: light-dark(#c9ced4, #4a4a4a);
+  --pure-chrome-sidebar: light-dark(#ffffff, #1c1c1c);
+  --pure-chrome-surface: light-dark(#ffffff, #1c1c1c);
+  --pure-chrome-paper: light-dark(#ffffff, #1c1c1c);
+  --pure-chrome-well: light-dark(#f3f4f6, #272727);
+  --pure-chrome-hover: light-dark(#f5f6f7, #272727);
+  --pure-chrome-selection: light-dark(#eef0f3, #2c2c2c);
+  --pure-chrome-line: light-dark(#e4e6e9, #3a3a3a);
+  --pure-chrome-fence: light-dark(#eef0f2, #2c2c2c);
+  --pure-chrome-muted: light-dark(#6b7178, #969696);
+  --pure-chrome-soft: light-dark(#4b5158, #bdbdbd);
   --pure-chrome-radius: 0;
-  --pure-chrome-accent: #2f5d8c; /* the held look's one muted accent, not the app's plum */
-  --pure-chrome-on-accent: #ffffff;
-  --pp-paper: #f3f4f6;
-  --pp-paper-raised: #f7f8f9;
-  --pp-hover: #f5f6f7;
-  --pp-wash: #f3f4f6;
-  --pp-wash-deep: #e4e6e9;
-  --pp-wash-strong: #e4e6e9;
-  --pp-chip: #f3f4f6;
-  --pp-chip-text: #4b5158;
-  --pp-card: #ffffff;
-  --pp-panel: #ffffff;
-  --pp-panel-strong: #ffffff;
-  --pp-popover: #ffffff;
-  --pp-glass-edge: #e4e6e9;
-  --pp-glass-edge-strong: #e4e6e9;
-  --pp-glass-line: #e4e6e9;
+  --pure-chrome-accent: light-dark(#2f5d8c, #7fafe3); /* the held look's one muted accent, not the app's plum */
+  --pure-chrome-on-accent: light-dark(#ffffff, #1c1c1c);
+  --pp-paper: light-dark(#f3f4f6, #272727);
+  --pp-paper-raised: light-dark(#f7f8f9, #232323);
+  --pp-hover: light-dark(#f5f6f7, #272727);
+  --pp-wash: light-dark(#f3f4f6, #272727);
+  --pp-wash-deep: light-dark(#e4e6e9, #3a3a3a);
+  --pp-wash-strong: light-dark(#e4e6e9, #3a3a3a);
+  --pp-chip: light-dark(#f3f4f6, #272727);
+  --pp-chip-text: light-dark(#4b5158, #bdbdbd);
+  --pp-card: light-dark(#ffffff, #1c1c1c);
+  --pp-panel: light-dark(#ffffff, #1c1c1c);
+  --pp-panel-strong: light-dark(#ffffff, #1c1c1c);
+  --pp-popover: light-dark(#ffffff, #1c1c1c);
+  --pp-glass-edge: light-dark(#e4e6e9, #3a3a3a);
+  --pp-glass-edge-strong: light-dark(#e4e6e9, #3a3a3a);
+  --pp-glass-line: light-dark(#e4e6e9, #3a3a3a);
   --pp-glass-blur: none;
   --pp-glass-shadow: none;
-  --pp-line: #e4e6e9;
-  --pp-line-soft: #e4e6e9;
-  --pp-line-strong: #c9ced4;
-  --pp-faint: #9aa0a6;
-  --pp-muted-2: #6b7178;
-  --pp-icon: #6b7178;
-  --pp-muted: #6b7178;
-  --pp-text-soft: #4b5158;
-  --pp-text-strong: #4b5158;
-  --pp-text-notes: #1f2328;
-  --pp-ink: #1f2328;
-  --pp-ink-deep: #1f2328;
+  --pp-line: light-dark(#e4e6e9, #3a3a3a);
+  --pp-line-soft: light-dark(#e4e6e9, #3a3a3a);
+  --pp-line-strong: light-dark(#c9ced4, #4a4a4a);
+  --pp-faint: light-dark(#9aa0a6, #5c5c5c);
+  --pp-muted-2: light-dark(#6b7178, #969696);
+  --pp-icon: light-dark(#6b7178, #969696);
+  --pp-muted: light-dark(#6b7178, #969696);
+  --pp-text-soft: light-dark(#4b5158, #bdbdbd);
+  --pp-text-strong: light-dark(#4b5158, #bdbdbd);
+  --pp-text-notes: light-dark(#1f2328, #ededed);
+  --pp-ink: light-dark(#1f2328, #ededed);
+  --pp-ink-deep: light-dark(#1f2328, #ededed);
   --pp-accent: var(--pure-chrome-accent);
   --pp-accent-text: var(--pure-chrome-accent);
   --pp-accent-solid: var(--pure-chrome-accent);
-  --pp-on-solid: #ffffff;
-  --pp-green-wash: #eef0f3;
-  --pp-green-wash-deep: #e4e6e9;
-  --pp-plum: #8d4b63;
-  --pp-plum-deep: #6d374a;
-  --pp-warn: #c08a3e;
+  --pp-on-solid: light-dark(#ffffff, #1c1c1c);
+  --pp-green-wash: light-dark(#eef0f3, #2c2c2c);
+  --pp-green-wash-deep: light-dark(#e4e6e9, #3a3a3a);
+  --pp-plum: light-dark(#8d4b63, #db92ab);
+  --pp-plum-deep: light-dark(#6d374a, #d596aa);
+  --pp-warn: light-dark(#c08a3e, #d69f54);
   --pp-shadow: rgba(40, 34, 30, 0.3);
 }
 [data-compact-room] [data-compact-part='search'] > input {
-  background: #ffffff;
+  background: light-dark(#ffffff, #1c1c1c);
 }
 [data-compact-room] [data-compact-view] {
   gap: 0;
   padding: 0;
-  background: #ffffff;
+  background: light-dark(#ffffff, #1c1c1c);
 }
 [data-compact-room] [data-compact-part='rail'][data-chrome],
 [data-compact-room] [data-compact-part='detail'] {
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  background: #ffffff;
+  background: light-dark(#ffffff, #1c1c1c);
 }
 [data-compact-room] [data-compact-part='rail'] [data-chrome='list-row'] {
   border-radius: 0;
