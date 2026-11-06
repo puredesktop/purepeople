@@ -187,7 +187,7 @@ const Sheet = styled.section`
   .sp { flex: 1; }
 `
 const glassPanel = `
-  min-height: 0; overflow: hidden; border-radius: 18px;
+  min-height: 0; overflow: hidden; border-radius: var(--pure-chrome-radius, 3px);
   background: var(--pp-panel-strong); border: 1px solid var(--pp-glass-edge);
   box-shadow: var(--pp-glass-shadow);
   backdrop-filter: var(--pp-glass-blur); -webkit-backdrop-filter: var(--pp-glass-blur);
@@ -195,14 +195,14 @@ const glassPanel = `
 const Main = styled.div` flex: 1; min-width: 0; display: flex; flex-direction: column; ${glassPanel} `
 const Head = styled.div`
   display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--pp-glass-line); flex-wrap: wrap;
-  .back { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; font-size: 13px; padding: 4px 8px; border-radius: 8px; color: var(--pp-text-soft); }
+  .back { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; font-size: 13px; padding: 4px 8px; border-radius: var(--pure-chrome-radius, 3px); color: var(--pp-text-soft); }
   .back:hover { background: var(--pp-hover); color: var(--pp-ink); }
   .rule { width: 1px; height: 22px; background: var(--pp-glass-line); }
   .title { font-size: 17px; font-weight: 600; } .sub { font-size: 12.5px; color: var(--pp-muted); }
 `
 const Segmented = styled.div`
-  display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--pp-wash);
-  button { height: 28px; padding: 0 12px; border-radius: 999px; border: 0; background: none; font-size: 12.5px; color: var(--pp-muted); }
+  display: flex; gap: 2px; padding: 3px; border-radius: 2px; background: var(--pp-wash);
+  button { height: 28px; padding: 0 12px; border-radius: 2px; border: 0; background: none; font-size: 12.5px; color: var(--pp-muted); }
   button[aria-pressed='true'] { background: var(--pp-card); color: var(--pp-ink); font-weight: 600; box-shadow: 0 1px 2px rgba(16, 22, 40, .10); }
 `
 const Canvas = styled.div`
@@ -215,13 +215,13 @@ const Canvas = styled.div`
 const Node = styled.button<{ $faded: boolean }>`
   position: absolute; width: 124px; margin-left: -62px; border: 0; background: none; padding: 0; display: flex; flex-direction: column; align-items: center; gap: 3px;
   opacity: ${({ $faded }) => ($faded ? 0.55 : 1)};
-  .name { font-size: 12px; font-weight: 600; line-height: 1.2; padding: 2px 7px; border-radius: 7px; background: var(--pp-card); box-shadow: 0 1px 2px rgba(16, 22, 40, .08); }
+  .name { font-size: 12px; font-weight: 600; line-height: 1.2; padding: 2px 7px; border-radius: var(--pure-chrome-radius, 3px); background: var(--pp-card); box-shadow: 0 1px 2px rgba(16, 22, 40, .08); }
   .name.on { background: var(--pp-accent-solid); color: var(--pp-on-solid); }
   .org { max-width: 120px; font-size: 10.5px; line-height: 1.2; color: var(--pp-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  &:focus-visible { outline: 2px solid var(--pp-accent); outline-offset: 4px; border-radius: 12px; }
+  &:focus-visible { outline: 2px solid var(--pp-accent); outline-offset: 4px; border-radius: var(--pure-chrome-radius, 3px); }
 `
 const Legend = styled.div`
-  position: absolute; left: 16px; bottom: 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; padding: 7px 12px; border-radius: 12px;
+  position: absolute; left: 16px; bottom: 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; padding: 7px 12px; border-radius: var(--pure-chrome-radius, 3px);
   background: var(--pp-card); border: 1px solid var(--pp-glass-edge); box-shadow: 0 6px 18px rgba(16, 22, 40, .06);
   font-size: 12px; color: var(--pp-text-soft);
   span { display: inline-flex; align-items: center; gap: 6px; }
@@ -238,18 +238,18 @@ const SideBody = styled.div`
   .block { display: flex; flex-direction: column; gap: 6px; }
   .path { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; }
   .stepWrap { display: inline-flex; align-items: center; gap: 6px; }
-  .step { padding: 3px 9px; border-radius: 999px; background: var(--pp-chip); color: var(--pp-chip-text); } .step.on { background: var(--pp-accent-solid); color: var(--pp-on-solid); }
+  .step { padding: 3px 9px; border-radius: 2px; background: var(--pp-chip); color: var(--pp-chip-text); } .step.on { background: var(--pp-accent-solid); color: var(--pp-on-solid); }
   .arrow { color: var(--pp-muted); }
-  .tie { display: flex; gap: 10px; align-items: flex-start; padding: 9px 11px; border-radius: 12px; border: 1px solid var(--pp-glass-edge); background: var(--pp-card); text-align: left; box-shadow: 0 1px 2px rgba(16, 22, 40, .05); }
+  .tie { display: flex; gap: 10px; align-items: flex-start; padding: 9px 11px; border-radius: var(--pure-chrome-radius, 3px); border: 1px solid var(--pp-glass-edge); background: var(--pp-card); text-align: left; box-shadow: 0 1px 2px rgba(16, 22, 40, .05); }
   .tie:hover { background: var(--pp-hover); }
   .text { display: flex; flex-direction: column; gap: 1px; min-width: 0; font-size: 12.5px; } .text b { font-size: 13px; } .text .when { color: var(--pp-muted); font-size: 11.5px; }
 `
 const Label = styled.span` font-family: var(--platform-typography-font-family-mono, ui-monospace, monospace); font-size: var(--pure-chrome-label-size, 10.5px); letter-spacing: var(--pure-chrome-label-tracking, .12em); text-transform: uppercase; color: var(--pp-muted); `
 const Muted = styled.span` font-size: 12.5px; color: var(--pp-muted); `
-const Advice = styled.div` padding: 12px 14px; border-radius: 12px; background: var(--pp-green-wash); color: var(--pp-ink); font-size: 13px; line-height: 1.45; `
+const Advice = styled.div` padding: 12px 14px; border-radius: var(--pure-chrome-radius, 3px); background: var(--pp-green-wash); color: var(--pp-ink); font-size: 13px; line-height: 1.45; `
 const SideFoot = styled.div` display: flex; flex-direction: column; gap: 8px; padding: 12px 20px; border-top: 1px solid var(--pp-glass-line); background: color-mix(in srgb, var(--pp-card) 40%, transparent); .row { display: flex; gap: 8px; } .row > * { flex: 1; } `
 const Button = styled.button<{ $primary?: boolean }>`
-  height: 36px; padding: 0 14px; border-radius: 10px; font-size: 13px;
+  height: 36px; padding: 0 14px; border-radius: var(--pure-chrome-radius, 3px); font-size: 13px;
   border: 1px solid ${({ $primary }) => ($primary ? 'transparent' : 'var(--pp-glass-edge)')};
   background: ${({ $primary }) => ($primary ? 'var(--pp-accent-solid)' : 'var(--pp-card)')};
   color: ${({ $primary }) => ($primary ? 'var(--pp-on-solid)' : 'var(--pp-ink)')} !important; font-weight: ${({ $primary }) => ($primary ? 600 : 400)};

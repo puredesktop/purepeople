@@ -56,7 +56,7 @@ const Dialog = styled.dialog`
   color: var(--pp-ink);
   background: var(--pp-popover);
   border: 1px solid var(--pp-glass-edge-strong);
-  border-radius: 14px;
+  border-radius: var(--pure-chrome-radius, 3px);
   padding: 24px;
   box-shadow: 0 18px 60px var(--pp-shadow-deep);
   backdrop-filter: var(--pp-glass-blur);

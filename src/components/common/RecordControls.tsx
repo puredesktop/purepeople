@@ -5,7 +5,7 @@ export const Action = styled.button`
   color: var(--pp-ink);
   background: var(--pp-paper-raised);
   border: 1px solid var(--pp-wash-strong);
-  border-radius: 5px;
+  border-radius: var(--pure-chrome-radius, 3px);
   padding: 6px 10px;
   cursor: pointer;
   &:disabled { opacity: .55; cursor: default; }
@@ -28,7 +28,7 @@ export const Field = styled.input`
   color: var(--pp-ink);
   background: var(--pp-paper-raised);
   border: 1px solid var(--pp-wash-strong);
-  border-radius: 5px;
+  border-radius: var(--pure-chrome-radius, 3px);
   padding: 8px;
   min-width: 0;
   flex: 1;

@@ -265,7 +265,7 @@ const Sheet = styled.section`
   .sp { flex: 1; }
 `
 const glassPanel = `
-  min-height: 0; overflow: hidden; border-radius: 18px;
+  min-height: 0; overflow: hidden; border-radius: var(--pure-chrome-radius, 3px);
   background: var(--pp-panel-strong); border: 1px solid var(--pp-glass-edge);
   box-shadow: var(--pp-glass-shadow);
   backdrop-filter: var(--pp-glass-blur); -webkit-backdrop-filter: var(--pp-glass-blur);
@@ -282,24 +282,24 @@ const Kicker = styled.div`
 const Title = styled.div` margin-top: 4px; font-size: 21px; font-weight: 600; letter-spacing: -0.01em; `
 const Sub = styled.div` margin-top: 2px; font-size: 13px; color: var(--pp-text-soft); `
 const Search = styled.label`
-  display: flex; align-items: center; gap: 8px; width: 240px; height: 34px; padding: 0 12px; border-radius: 10px;
+  display: flex; align-items: center; gap: 8px; width: 240px; height: 34px; padding: 0 12px; border-radius: var(--pure-chrome-radius, 3px);
   background: var(--pp-wash); border: 1px solid var(--pp-glass-line); color: var(--pp-muted);
   input { border: 0; outline: 0; background: none; font: inherit; font-size: 13px; color: var(--pp-ink); flex: 1; min-width: 0; }
   input::placeholder { color: var(--pp-muted-2); }
   &:focus-within { border-color: var(--pp-accent); background: var(--pp-card); }
 `
 const Segmented = styled.div`
-  display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: var(--pp-wash);
-  button { height: 28px; padding: 0 12px; border-radius: 999px; border: 0; background: none; font-size: 13px; color: var(--pp-muted); }
+  display: flex; gap: 2px; padding: 3px; border-radius: 2px; background: var(--pp-wash);
+  button { height: 28px; padding: 0 12px; border-radius: 2px; border: 0; background: none; font-size: 13px; color: var(--pp-muted); }
   button[aria-pressed='true'] { background: var(--pp-card); color: var(--pp-ink); font-weight: 600; box-shadow: 0 1px 2px rgba(16, 22, 40, .10); }
 `
 const IconButton = styled.button`
-  width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--pp-glass-line); background: var(--pp-wash); font-size: 18px; line-height: 1; color: var(--pp-text-soft);
+  width: 34px; height: 34px; border-radius: var(--pure-chrome-radius, 3px); border: 1px solid var(--pp-glass-line); background: var(--pp-wash); font-size: 18px; line-height: 1; color: var(--pp-text-soft);
   &:hover { background: var(--pp-hover); color: var(--pp-ink); }
 `
 const Chips = styled.div` display: flex; align-items: center; gap: 6px; padding: 10px 22px 4px; flex-wrap: wrap; `
 const Chip = styled.button`
-  height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--pp-line); background: transparent; font-size: 12.5px; color: var(--pp-text-strong);
+  height: 30px; padding: 0 12px; border-radius: 2px; border: 1px solid var(--pp-line); background: transparent; font-size: 12.5px; color: var(--pp-text-strong);
   span { font-family: var(--platform-typography-font-family-mono, monospace); font-size: 11px; opacity: .65; margin-left: 2px; }
   &:hover:not(:disabled) { background: var(--pp-hover); }
   &[aria-pressed='true'] { border-color: var(--pp-accent); background: var(--pp-green-wash); color: var(--pp-accent-text); font-weight: 600; }
@@ -309,19 +309,19 @@ const Body = styled.div` flex: 1; min-height: 0; overflow: auto; padding: 12px 2
 const Empty = styled.div` padding: 60px 20px; text-align: center; color: var(--pp-muted); font-size: 14px; `
 const Grid = styled.div` display: grid; grid-template-columns: repeat(auto-fill, minmax(196px, 1fr)); gap: 12px; `
 const Card = styled.article<{ $selected: boolean }>`
-  position: relative; border-radius: 16px; background: var(--pp-card);
+  position: relative; border-radius: var(--pure-chrome-radius, 3px); background: var(--pp-card);
   border: 1px solid ${({ $selected }) => ($selected ? 'var(--pp-accent)' : 'var(--pp-glass-edge)')};
   box-shadow: ${({ $selected }) => ($selected ? '0 0 0 3px var(--pp-green-wash), 0 8px 22px rgba(16, 22, 40, .08)' : '0 1px 2px rgba(16, 22, 40, .05), 0 8px 22px rgba(16, 22, 40, .05)')};
   transition: box-shadow .15s ease, border-color .15s ease, transform .15s ease;
   &:hover { transform: translateY(-1px); }
-  .open { width: 100%; border: 0; background: none; padding: 18px 12px 14px; display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; border-radius: 16px; }
+  .open { width: 100%; border: 0; background: none; padding: 18px 12px 14px; display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center; border-radius: var(--pure-chrome-radius, 3px); }
   .name { margin-top: 6px; font-size: 14.5px; font-weight: 600; }
   .role { font-size: 12.5px; line-height: 1.35; color: var(--pp-text-strong); }
   .org { font-size: 12px; color: var(--pp-muted); }
   .email { max-width: 100%; font-size: 11.5px; color: var(--pp-plum); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   @media (prefers-reduced-motion: reduce) { transition: none; &:hover { transform: none; } }
 `
-const Rows = styled.div` border-radius: 16px; overflow: hidden; background: var(--pp-card); border: 1px solid var(--pp-glass-edge); box-shadow: 0 8px 22px rgba(16, 22, 40, .05); `
+const Rows = styled.div` border-radius: var(--pure-chrome-radius, 3px); overflow: hidden; background: var(--pp-card); border: 1px solid var(--pp-glass-edge); box-shadow: 0 8px 22px rgba(16, 22, 40, .05); `
 const Row = styled.div<{ $selected: boolean }>`
   display: flex; align-items: center; gap: 8px; padding: 0 12px 0 0; border-bottom: 1px solid var(--pp-glass-line);
   &:last-child { border-bottom: 0; }
@@ -336,13 +336,13 @@ const Row = styled.div<{ $selected: boolean }>`
   @media (max-width: 1100px) { .email { display: none; } }
 `
 const Badge = styled.span<{ $level: 'met' | 'emailed' | 'new' | 'here' }>`
-  display: inline-block; margin-top: 2px; padding: 2px 8px; border-radius: 999px; font-size: 11px;
+  display: inline-block; margin-top: 2px; padding: 2px 8px; border-radius: 2px; font-size: 11px;
   background: ${({ $level }) => ($level === 'new' ? 'var(--pure-info-muted, rgba(79, 88, 168, .12))' : $level === 'here' ? 'var(--pp-green-wash)' : 'var(--pure-success-muted, rgba(63, 122, 69, .13))')};
   color: ${({ $level }) => ($level === 'new' ? 'var(--pure-info-text, #3d4590)' : $level === 'here' ? 'var(--pp-accent-text)' : 'var(--pure-success-text, #2f6135)')};
 `
 const StarButton = styled.button<{ $on: boolean; $inline: boolean; $large: boolean }>`
   ${({ $inline }) => ($inline ? '' : 'position: absolute; top: 10px; right: 10px; z-index: 1;')}
-  width: ${({ $large }) => ($large ? 38 : 32)}px; height: ${({ $large }) => ($large ? 38 : 32)}px; flex: none; border-radius: 999px; display: grid; place-items: center;
+  width: ${({ $large }) => ($large ? 38 : 32)}px; height: ${({ $large }) => ($large ? 38 : 32)}px; flex: none; border-radius: 2px; display: grid; place-items: center;
   border: 1px solid ${({ $on }) => ($on ? 'color-mix(in srgb, var(--pp-accent) 40%, transparent)' : 'var(--pp-glass-line)')};
   background: ${({ $on }) => ($on ? 'var(--pp-green-wash)' : 'var(--pp-wash)')};
   color: ${({ $on }) => ($on ? 'var(--pp-accent)' : 'var(--pp-muted)')};
@@ -354,7 +354,7 @@ const Tray = styled.div`
   .meet { font-size: 13.5px; }
 `
 const Button = styled.button<{ $primary?: boolean; $soft?: boolean }>`
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: 10px; font-size: 13px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 34px; padding: 0 14px; border-radius: var(--pure-chrome-radius, 3px); font-size: 13px;
   border: 1px solid ${({ $primary, $soft }) => ($primary ? 'transparent' : $soft ? 'color-mix(in srgb, var(--pp-accent) 32%, transparent)' : 'var(--pp-glass-edge)')};
   background: ${({ $primary, $soft }) => ($primary ? 'var(--pp-accent-solid)' : $soft ? 'var(--pp-green-wash)' : 'var(--pp-card)')};
   color: ${({ $primary, $soft }) => ($primary ? 'var(--pp-on-solid)' : $soft ? 'var(--pp-accent-text)' : 'var(--pp-ink)')} !important;
@@ -377,13 +377,13 @@ const Section = styled.div`
   .phone button { border: 0; padding: 2px 4px; background: transparent; color: var(--pp-muted); font: inherit; font-size: 12px; cursor: pointer; }
   .phone button:hover, .phone button:focus-visible { color: var(--pp-accent); text-decoration: underline; }
   .pills { display: flex; gap: 6px; flex-wrap: wrap; }
-  .pill { padding: 3px 9px; border-radius: 999px; background: var(--pp-chip); font-size: 12px; color: var(--pp-chip-text); }
+  .pill { padding: 3px 9px; border-radius: 2px; background: var(--pp-chip); font-size: 12px; color: var(--pp-chip-text); }
   .pill.quiet { background: none; border: 1px solid var(--pp-line); }
   .seen { display: flex; gap: 10px; font-size: 12.5px; } .seen .when { flex: 0 0 60px; color: var(--pp-muted); } .seen .app { flex: 0 0 64px; color: var(--pp-text-soft); } .seen .what { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .labelRow { display: flex; align-items: center; justify-content: space-between; }
   .stack { display: flex; align-items: center; } .stacked { margin-right: -4px; border-radius: 50%; box-shadow: 0 0 0 2px var(--pp-card); display: inline-flex; }
   .names { margin-left: 16px; font-size: 12.5px; color: var(--pp-text-soft); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  textarea { font: inherit; font-size: 13px; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--pp-glass-line); background: var(--pp-wash); color: var(--pp-ink); resize: vertical; min-height: 64px; }
+  textarea { font: inherit; font-size: 13px; padding: 8px 10px; border-radius: var(--pure-chrome-radius, 3px); border: 1px solid var(--pp-glass-line); background: var(--pp-wash); color: var(--pp-ink); resize: vertical; min-height: 64px; }
   textarea::placeholder { color: var(--pp-muted-2); }
   textarea:focus { outline: none; border-color: var(--pp-accent); background: var(--pp-card); }
   .met { display: flex; align-items: center; gap: 8px; font-size: 13px; } .met input { width: 16px; height: 16px; accent-color: var(--pp-accent); }

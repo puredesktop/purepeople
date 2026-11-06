@@ -79,7 +79,7 @@ function CustomerEditor({ contact, update }: { contact: ContactRecord; update: P
 
 const Page = styled.section`
   width: 100%; overflow: auto; padding: 20px; box-sizing: border-box;
-  background: var(--pp-paper); border-radius: 12px;
+  background: var(--pp-paper); border-radius: var(--pure-chrome-radius, 3px);
   display: flex; flex-direction: column; gap: 16px;
   h1 { font-size: 26px; font-weight: 500; margin: 0 auto 0 0; }
   h2 { font-size: 19px; font-weight: 500; margin: 0; }
@@ -99,7 +99,7 @@ const Card = styled(Choice)`
   span { color: var(--pp-muted); overflow-wrap: anywhere; }
 `
 const Panel = styled.div`
-  border: 1px solid var(--pp-wash-strong); border-radius: 10px; padding: 22px;
+  border: 1px solid var(--pp-wash-strong); border-radius: var(--pure-chrome-radius, 3px); padding: 22px;
   background: var(--pp-paper-raised); display: flex; flex-direction: column; gap: 16px;
 `
 const Picker = styled(Panel)``
@@ -107,6 +107,6 @@ const PickerResults = styled(Stack)`max-height: 200px; overflow: auto;`
 const Label = styled.label`display: flex; flex-direction: column; gap: 8px; font-size: 13px;`
 const TextArea = styled.textarea`
   font: inherit; color: var(--pp-ink); background: var(--pp-paper-raised);
-  border: 1px solid var(--pp-wash-strong); border-radius: 5px; padding: 10px;
+  border: 1px solid var(--pp-wash-strong); border-radius: var(--pure-chrome-radius, 3px); padding: 10px;
   min-height: 100px; resize: vertical;
 `
