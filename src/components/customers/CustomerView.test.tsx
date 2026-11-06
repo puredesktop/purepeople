@@ -45,7 +45,9 @@ it('registered customer tools and the reachable UI use the same records, validat
     const person = [...host.querySelectorAll('div')].find(element => element.textContent === 'Taylor Example')!
     await act(async () => person.dispatchEvent(new MouseEvent('click', { bubbles: true })))
     expect(host.querySelector('[aria-label="Notes"]')!.textContent).toBe('Original contact note')
-    await click('Customers')
+    const customersTab = [...host.querySelectorAll('[role="tab"]')].find(item => item.textContent === 'Customers')
+    expect(customersTab, 'Customers').toBeTruthy()
+    await act(async () => customersTab!.dispatchEvent(new MouseEvent('click', { bubbles: true })))
     expect(host.textContent).toContain('0 tracked contacts')
     const id = held.contacts[0].id
     const created = await invoke('createCustomer', { contactId: id, status: 'Lead', notes: 'Pilot', nextAction: 'Arrange call', dueDate: '2026-11-01' })

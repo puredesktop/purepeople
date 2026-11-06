@@ -69,7 +69,7 @@ it('with compact off, adds no mark to the page and keeps every control working',
   expect(host.querySelector(ANY_COMPACT_MARK)).toBeNull()
   await openPerson('Ada Example')
   expect(host.querySelector(ANY_COMPACT_MARK)).toBeNull()
-  expect(textOf('button', 'Customers')).toBeTruthy()
+  expect(textOf('[role="tab"]', 'Customers')).toBeTruthy()
   expect(textOf('[role="button"]', 'Network')).toBeTruthy()
   expect(textOf('[role="button"]', 'Delete contact')).toBeTruthy()
   // The org name still opens the org, with its way back.
@@ -100,7 +100,7 @@ it('in compact, a search lists people only', async () => {
 it('in compact, hides the chrome without removing it', async () => {
   await render(people(), vi.fn(), true)
   await openPerson('Ada Example')
-  for (const [selector, text] of [['button', 'Customers'], ['[role="button"]', 'Network'], ['[role="button"]', 'Find photo'], ['[role="button"]', '✉ Email'], ['[role="button"]', 'Delete contact'], ['[role="button"]', 'Export']] as const) {
+  for (const [selector, text] of [['[role="tab"]', 'Customers'], ['[role="button"]', 'Network'], ['[role="button"]', 'Find photo'], ['[role="button"]', '✉ Email'], ['[role="button"]', 'Delete contact'], ['[aria-label="More"]', '⋯']] as const) {
     const element = textOf(selector, text)
     expect(element, text).toBeTruthy()
     expect(element!.closest('[data-compact-hide]'), text).not.toBeNull()
@@ -182,7 +182,8 @@ it('entering and leaving compact keeps the same record open, mounted, with its t
 it('coming into compact from the Orgs tab, or with a list open, still shows everyone', async () => {
   const store = people()
   await render(store, vi.fn())
-  await click(textOf('button', 'Press1'))
+  await click(host.querySelector('[aria-label="Choose a list"]'))
+  await click(textOf('[role="menuitem"]', 'Press 1'))
   await click(textOf('div', 'Orgs1'))
   expect(textOf('div', 'Ada Example')).toBeUndefined()
   await render(store, vi.fn(), true)
