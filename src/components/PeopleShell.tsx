@@ -12,7 +12,7 @@ import { Action } from './common/RecordControls'
 import { editRetainedDetail } from '../lib/contactDetails'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { createGlobalStyle, styled } from 'styled-components'
-import { quiet, quietLabel } from '../ui/styles'
+import { primaryLook, quiet, quietLabel } from '../ui/styles'
 import { usePlatformAgentTools } from '@purescience/platform-ui/bridge/react/usePlatformAgentTools'
 import { usePlatformBridge } from '@purescience/platform-ui/bridge/react/usePlatformBridge'
 import { usePlatformViewportResource } from '@purescience/platform-ui/bridge/react/usePlatformViewportResource'
@@ -1423,7 +1423,7 @@ export function PeopleShell({
           </RailTab>
           <TabSpacer />
           <NewLink role="button" tabIndex={0} onClick={() => setNewDraft('')}>
-            + New
+            {tab === 'orgs' ? 'New organisation' : 'New person'}
           </NewLink>
         </RailTabs>
 
@@ -2744,15 +2744,15 @@ const TabSpacer = styled.div`
   flex: 1;
 `
 
+/** The one main action of the list: People's colour, solid, a button that says what it makes. */
 const NewLink = styled.span`
-  font-size: var(--pure-chrome-ui-size);
-  color: var(--pp-accent);
-  cursor: pointer;
-  padding-bottom: 9px;
-
-  &:hover {
-    color: var(--pp-accent-text);
-  }
+  ${quiet}
+  ${primaryLook}
+  align-self: center;
+  margin-bottom: 9px;
+  height: 26px;
+  padding: 0 10px;
+  font-size: 12.5px;
 `
 
 const RailHead = styled.div`
