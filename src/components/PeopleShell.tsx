@@ -12,7 +12,7 @@ import { Action } from './common/RecordControls'
 import { editRetainedDetail } from '../lib/contactDetails'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { createGlobalStyle, styled } from 'styled-components'
-import { quietLabel } from '../ui/styles'
+import { quiet, quietLabel } from '../ui/styles'
 import { usePlatformAgentTools } from '@purescience/platform-ui/bridge/react/usePlatformAgentTools'
 import { usePlatformBridge } from '@purescience/platform-ui/bridge/react/usePlatformBridge'
 import { usePlatformViewportResource } from '@purescience/platform-ui/bridge/react/usePlatformViewportResource'
@@ -2306,15 +2306,6 @@ export function PeopleShell({
                         />
                       </SubLine>
                     </HeaderNameCol>
-                    <HeaderAction {...compactHide} role="button" onClick={() => setNetwork({ centerId: selected.id })} title="Who they share threads and meetings with">
-                      Network
-                    </HeaderAction>
-                    <HeaderAction {...compactHide} role="button" onClick={() => void requestPhotoResearch()}>
-                      {selected.avatarUrl ? 'Find better photo' : 'Find photo'}
-                    </HeaderAction>
-                    <HeaderAction {...compactHide} role="button" onClick={emailSelected}>
-                      ✉ Email
-                    </HeaderAction>
                   </HeaderTop>
                   {renderAvatarExtras(selected.avatarUrl)}
                   {photoResearchStatus ? (
@@ -2323,13 +2314,26 @@ export function PeopleShell({
                   {emailNote ? (
                     <QuietAlert role="status">{emailNote}</QuietAlert>
                   ) : null}
-                  <ChipSet
-                    items={selected.tags ?? []}
-                    suggestions={allTags}
-                    addLabel="+ tag"
-                    variant="tag"
-                    onChange={items => editList('tags', items)}
-                  />
+                  <HeaderTagRow>
+                    <ChipSet
+                      items={selected.tags ?? []}
+                      suggestions={allTags}
+                      addLabel="+ tag"
+                      variant="tag"
+                      onChange={items => editList('tags', items)}
+                    />
+                      <HeaderActions {...compactHide}>
+                        <HeaderAction role="button" onClick={() => setNetwork({ centerId: selected.id })} title="Who they share threads and meetings with">
+                          Network
+                        </HeaderAction>
+                        <HeaderAction role="button" onClick={() => void requestPhotoResearch()}>
+                          {selected.avatarUrl ? 'Find better photo' : 'Find photo'}
+                        </HeaderAction>
+                        <HeaderAction role="button" onClick={emailSelected}>
+                          ✉ Email
+                        </HeaderAction>
+                      </HeaderActions>
+                  </HeaderTagRow>
                 </HeaderBlock>
 
                 <Rows {...compactPart('rows')}>
@@ -3012,8 +3016,8 @@ const AvatarFallback = styled.div<{ $square?: boolean }>`
   height: 62px;
   flex: none;
   border-radius: ${({ $square }) => ($square ? '12px' : '50%')};
-  background: var(--pp-green-wash);
-  color: var(--pp-accent);
+  background: var(--n-hover);
+  color: var(--n-soft);
   font-family: ${SERIF};
   font-size: 24px;
   display: flex;
@@ -3058,17 +3062,25 @@ const Dot = styled.span`
   color: var(--pp-muted-2);
 `
 
+/** Network, Find photo, Email: things to do, so raised buttons, never coloured words that could be taken for highlights. */
 const HeaderAction = styled.span`
-  align-self: flex-end;
+  ${quiet}
   flex: none;
-  font-size: var(--pure-chrome-ui-size);
-  color: var(--pp-accent);
-  cursor: pointer;
-  padding-bottom: 6px;
+`
 
-  &:hover {
-    color: var(--pp-accent-text);
-  }
+/** The header's actions, together at the right edge of the tags row, where there is room beside the record's own words. */
+const HeaderActions = styled.div`
+  display: flex;
+  flex: none;
+  gap: 6px;
+  margin-left: auto;
+`
+
+const HeaderTagRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
 `
 
 const InlineText = styled.div<{
@@ -3269,14 +3281,18 @@ const ValueLine = styled.div`
   min-width: 0;
 `
 
+/** A link to another record (the person's organisation): ink words with a hairline underline, not a colour. */
 const ValueLink = styled.span<{ $size?: number }>`
   font-size: ${({ $size }) => $size ?? 15}px;
-  color: var(--pp-plum);
+  color: var(--n-ink);
   cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--n-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
 
   &:hover {
-    color: var(--pp-plum-deep);
-    text-decoration: underline;
+    text-decoration-color: var(--n-ink);
   }
 `
 
