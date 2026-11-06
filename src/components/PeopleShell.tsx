@@ -2712,22 +2712,22 @@ const Rail = styled.div.attrs(chrome('sidebar'))`
 `
 
 const RailTabs = styled.div`
-  padding: 14px var(--pure-chrome-inset) 0;
+  padding: 10px var(--pure-chrome-inset);
   display: flex;
-  gap: 18px;
-  align-items: baseline;
+  gap: 4px;
+  align-items: center;
   border-bottom: 1px solid var(--pure-chrome-line);
 `
 
+/** A tab; the open one has the shared selected look (hairline round a faint ground, words ink). Never an under-bar. */
 const RailTab = styled.div<{ $active: boolean }>`
   display: flex;
   align-items: baseline;
   gap: 6px;
-  padding-bottom: 9px;
-  border-bottom: 2px solid
-    ${({ $active }) => ($active ? 'var(--pp-accent)' : 'transparent')};
+  padding: 5px 10px;
+  background: ${({ $active }) => ($active ? 'var(--p-chosen)' : 'transparent')};
+  box-shadow: ${({ $active }) => ($active ? 'var(--p-chosen-edge)' : 'none')};
   cursor: pointer;
-  transition: border-color 120ms ease;
 
   span:first-child {
     font-size: var(--pure-chrome-ui-size);
@@ -2736,7 +2736,12 @@ const RailTab = styled.div<{ $active: boolean }>`
   }
 
   &:hover {
-    border-color: ${({ $active }) => ($active ? 'var(--pp-accent)' : 'var(--pp-line)')};
+    background: ${({ $active }) => ($active ? 'var(--p-chosen)' : 'var(--n-hover)')};
+  }
+
+  /* The sidebar's own rule takes outlines off whatever is selected in it; the open tab keeps the shared one. */
+  :root:root:root:root:root body && {
+    box-shadow: ${({ $active }) => ($active ? 'var(--p-chosen-edge)' : 'none')};
   }
 `
 
