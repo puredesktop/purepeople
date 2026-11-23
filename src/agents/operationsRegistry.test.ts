@@ -807,6 +807,29 @@ describe('Composite App Functions (fn_*)', () => {
         nextAction: 'Follow up after fair',
       }),
     ])
+
+    // Uncapped counts are preserved even when maxItems truncates customer hygiene sections
+    const extraOverdueStore = saveCustomer(
+      makeRichStore(),
+      'elena@books.example',
+      { status: 'Lead', dueDate: '2026-10-01', nextAction: 'Ping Elena' },
+      'create',
+      NOW,
+    )
+    const cappedHarness = makeContext(extraOverdueStore)
+    const cappedHandlers = buildPurePeopleHandlers(() => cappedHarness.ctx)
+    const capped = JSON.parse(
+      (
+        await cappedHandlers.fn_duplicateAndHygieneAudit!(
+          invoke('fn_duplicateAndHygieneAudit', {
+            today: '2026-10-15',
+            maxItems: 1,
+          }),
+        )
+      ).content,
+    )
+    expect(capped.data.counts.overdueCustomers).toBe(2)
+    expect(capped.data.customerHygiene.overdue).toHaveLength(1)
   })
 
   it('fn_batchCurateDirectory supports dryRun, commits atomically in 1 setStore call, and aborts cleanly on validation error', async () => {
@@ -950,6 +973,21 @@ describe('Composite App Functions (fn_*)', () => {
         }),
       ),
     ).rejects.toThrow(AgentPeopleToolError)
+    expect(JSON.stringify(harness.getStore())).toBe(snapshotBefore)
+
+    // Invalid customerUpdates mode is rejected cleanly without mutating the store
+    await expect(
+      handlers.fn_batchCurateDirectory!(
+        invoke('fn_batchCurateDirectory', {
+          customerUpdates: [
+            {
+              contactIdOrEmail: 'sam@books.example',
+              mode: 'delete',
+            },
+          ],
+        }),
+      ),
+    ).rejects.toThrow(/Invalid customerUpdates mode/)
     expect(JSON.stringify(harness.getStore())).toBe(snapshotBefore)
   })
 

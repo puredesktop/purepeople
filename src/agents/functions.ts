@@ -500,15 +500,16 @@ export const fn_directoryBriefing = defineAppFunction<PeopleAgentToolContext>({
     const topLimit = parseLimit(args.topLimit, 10, 50)
     const staleDays = parseLimit(args.staleDays, 180, 3650)
 
+    const contactScanLimit = Math.max(2000, store.contacts.length)
     const scopedContacts =
       query || list
-        ? searchContacts(store, query, 2000, list ? list.id : null)
-        : searchContacts(store, '', 2000, null)
+        ? searchContacts(store, query, contactScanLimit, list ? list.id : null)
+        : searchContacts(store, '', contactScanLimit, null)
     const scopedIds = new Set(scopedContacts.map(c => c.id))
 
     const orgs = storeOrgs(store)
     const rollups = organisationRollups(store.contacts, orgs)
-    const matchedOrgs = searchOrgs(store, query, 2000)
+    const matchedOrgs = searchOrgs(store, query, Math.max(2000, orgs.length))
 
     const counts = listCounts(store)
     const listRoster = storeLists(store).map(item => ({
@@ -1176,7 +1177,12 @@ export const fn_duplicateAndHygieneAudit =
 
       const contacts =
         query || list
-          ? searchContacts(store, query, 2000, list ? list.id : null)
+          ? searchContacts(
+              store,
+              query,
+              Math.max(2000, store.contacts.length),
+              list ? list.id : null,
+            )
           : store.contacts
       const contactIds = new Set(contacts.map(c => c.id))
       const orgs = storeOrgs(store)
@@ -1222,11 +1228,11 @@ export const fn_duplicateAndHygieneAudit =
           ],
         }))
 
-      const overdueCustomers = listCustomers(store, {
+      const allOverdueCustomers = listCustomers(store, {
         due: 'Overdue',
         today,
-      })
-        .filter(c => contactIds.has(c.id))
+      }).filter(c => contactIds.has(c.id))
+      const overdueCustomers = allOverdueCustomers
         .slice(0, maxItems)
         .map(c => ({
           id: c.id,
@@ -1236,11 +1242,11 @@ export const fn_duplicateAndHygieneAudit =
           ...(c.customer!.nextAction ? { nextAction: c.customer!.nextAction } : {}),
         }))
 
-      const dueTodayCustomers = listCustomers(store, {
+      const allDueTodayCustomers = listCustomers(store, {
         due: 'Due today',
         today,
-      })
-        .filter(c => contactIds.has(c.id))
+      }).filter(c => contactIds.has(c.id))
+      const dueTodayCustomers = allDueTodayCustomers
         .slice(0, maxItems)
         .map(c => ({
           id: c.id,
@@ -1250,11 +1256,13 @@ export const fn_duplicateAndHygieneAudit =
           ...(c.customer!.nextAction ? { nextAction: c.customer!.nextAction } : {}),
         }))
 
-      const actionWithoutDueDate = listCustomers(store, {
+      const allActionWithoutDueDate = listCustomers(store, {
         due: 'No due date',
         today,
-      })
-        .filter(c => contactIds.has(c.id) && Boolean(c.customer?.nextAction?.trim()))
+      }).filter(
+        c => contactIds.has(c.id) && Boolean(c.customer?.nextAction?.trim()),
+      )
+      const actionWithoutDueDate = allActionWithoutDueDate
         .slice(0, maxItems)
         .map(c => ({
           id: c.id,
@@ -1265,7 +1273,7 @@ export const fn_duplicateAndHygieneAudit =
 
       return {
         mutated: false,
-        summary: `Hygiene audit across ${contacts.length} contacts: ${duplicateClusters.length} duplicate cluster(s), ${unlinkedDomainMatches.length} unlinked domain match(es), ${overdueCustomers.length} overdue follow-up(s)`,
+        summary: `Hygiene audit across ${contacts.length} contacts: ${duplicateClusters.length} duplicate cluster(s), ${unlinkedDomainMatches.length} unlinked domain match(es), ${allOverdueCustomers.length} overdue follow-up(s)`,
         data: {
           today,
           scannedContacts: contacts.length,
@@ -1277,9 +1285,9 @@ export const fn_duplicateAndHygieneAudit =
             contactsWithEnrichmentGaps: contacts.filter(
               c => !c.org?.trim() || !c.title?.trim() || !c.avatarUrl,
             ).length,
-            overdueCustomers: overdueCustomers.length,
-            dueTodayCustomers: dueTodayCustomers.length,
-            actionWithoutDueDate: actionWithoutDueDate.length,
+            overdueCustomers: allOverdueCustomers.length,
+            dueTodayCustomers: allDueTodayCustomers.length,
+            actionWithoutDueDate: allActionWithoutDueDate.length,
           },
           duplicateClusters: duplicateClusters.slice(0, maxItems),
           unlinkedDomainMatches: unlinkedDomainMatches.slice(0, maxItems),
@@ -1643,6 +1651,15 @@ export const fn_batchCurateDirectory =
             )
           }
           const requestedMode = text(item.mode) || 'upsert'
+          if (
+            requestedMode !== 'create' &&
+            requestedMode !== 'update' &&
+            requestedMode !== 'upsert'
+          ) {
+            throw new AgentPeopleToolError(
+              `Invalid customerUpdates mode "${requestedMode}" for "${idOrEmail}". Use "create", "update", or "upsert".`,
+            )
+          }
           const mode: 'create' | 'update' =
             requestedMode === 'create'
               ? 'create'
