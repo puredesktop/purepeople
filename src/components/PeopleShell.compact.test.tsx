@@ -173,7 +173,18 @@ it('entering and leaving compact keeps the same record open, mounted, with its t
   expect(host.querySelector('[aria-label="Notes"]')).toBe(notes)
   expect(host.querySelector('[data-chrome="sidebar"]')).toBe(rail)
   const tools = vi.mocked(usePlatformAgentTools).mock.lastCall![0] as { handlers: Record<string, unknown> }
-  expect(Object.keys(tools.handlers)).toEqual(expect.arrayContaining(['listContacts', 'upsertContact', 'getEventBoard', 'getPersonNetwork', 'createCustomer']))
+  expect(Object.keys(tools.handlers)).toEqual(expect.arrayContaining([
+    'listContacts',
+    'getContact',
+    'upsertContact',
+    'mergeContacts',
+    'fn_directoryBriefing',
+    'fn_personRelationshipDossier',
+    'fn_orgAndEventBriefing',
+    'discoverAppTools',
+    'callExtendedReadTool',
+    'callExtendedTool',
+  ]))
   await render(store, vi.fn(), false)
   expect(host.querySelector('[aria-label="Notes"]')).toBe(notes)
   expect(host.querySelector(ANY_COMPACT_MARK)).toBeNull()

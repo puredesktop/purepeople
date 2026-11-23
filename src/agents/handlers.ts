@@ -28,32 +28,11 @@ import {
 } from '../lib/peopleLists'
 import type { ContactAlternatives, ContactRecord, OrgRecord, PeopleStore, PeopleUpdate } from '../types'
 import { profilePhotoResearchBrief, type ProfilePhotoResearchMode } from '../lib/profilePhotoResearch'
-
-export const PUREPEOPLE_AGENT_TOOL_NAMES = [
-  'createCustomer',
-  'updateCustomer',
-  'listCustomers',
-  'listContacts',
-  'getContact',
-  'prepareProfilePhotoResearch',
-  'upsertContact',
-  'mergeContacts',
-  'listOrgs',
-  'getOrg',
-  'upsertOrg',
-  'listLists',
-  'createList',
-  'renameList',
-  'workListInOutreach',
-  'deleteList',
-  'addToList',
-  'removeFromList',
-  'getEventBoard',
-  'setEventPrep',
-  'getPersonNetwork',
-] as const
-
-export const PUREPEOPLE_AGENT_LOG_LABEL = 'purepeople'
+export {
+  EXPOSED_TOOL_NAMES,
+  PUREPEOPLE_AGENT_LOG_LABEL,
+  PUREPEOPLE_AGENT_TOOL_NAMES,
+} from './catalog'
 
 /** A tool argument was missing or unusable. Surfaced to the model verbatim. */
 export class AgentPeopleToolError extends Error {
