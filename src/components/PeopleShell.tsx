@@ -1,10 +1,8 @@
 import { useHeldCommand } from '@purescience/platform-ui/bridge/react/heldCommand'
 import { CustomerView } from './customers/CustomerView'
-import { listCustomersHandler, saveCustomerHandler } from '../agents/customerTools'
 import { CrossAppDragHandle } from '@purescience/platform-ui/components/assets/CrossAppDragHandle'
 import { useContactMerge } from '../hooks/useContactMerge'
 import { MergePerson } from './people/MergePerson'
-import { getEventBoardHandler, getPersonNetworkHandler, setEventPrepHandler } from '../agents/eventTools'
 import { scopeTitle, type BoardScope } from '../lib/eventBoard'
 import { RetainedDetails } from './people/RetainedDetails'
 import { contactAgentRefs, listAgentRefs, orgAgentRefs } from '../lib/agentRefs'
@@ -13,30 +11,19 @@ import { editRetainedDetail } from '../lib/contactDetails'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { createGlobalStyle, styled } from 'styled-components'
 import { primaryLook, quiet, quietLabel } from '../ui/styles'
-import { usePlatformAgentTools } from '@purescience/platform-ui/bridge/react/usePlatformAgentTools'
+import {
+  usePlatformAgentTools,
+  type AgentToolHandler,
+} from '@purescience/platform-ui/bridge/react/usePlatformAgentTools'
 import { usePlatformBridge } from '@purescience/platform-ui/bridge/react/usePlatformBridge'
 import { usePlatformViewportResource } from '@purescience/platform-ui/bridge/react/usePlatformViewportResource'
 import { resourceTarget } from '../lib/resourceTarget'
 import {
-  addToListHandler,
-  AgentPeopleToolError,
-  createListHandler,
-  deleteListHandler,
-  workListInOutreachHandler,
-  getContactHandler,
-  getOrgHandler,
-  listContactsHandler,
-  listListsHandler,
-  listOrgsHandler,
-  prepareProfilePhotoResearchHandler,
+  EXPOSED_TOOL_NAMES,
   PUREPEOPLE_AGENT_LOG_LABEL,
-  PUREPEOPLE_AGENT_TOOL_NAMES,
-  removeFromListHandler,
-  renameListHandler,
-  upsertContactHandler,
-  mergeContactsHandler,
-  upsertOrgHandler,
-} from '../agents/handlers'
+} from '../agents/catalog'
+import { AgentPeopleToolError } from '../agents/handlers'
+import { buildPurePeopleHandlers } from '../agents/operationsRegistry'
 import {
   contactByIdOrEmail,
   mergeFeedEntry,
@@ -493,52 +480,28 @@ export function PeopleShell({
 
   const toolContextRef = useRef({ store, setStore: commit })
   toolContextRef.current = { get store() { return storeRef.current }, setStore: commit }
+  const registryHandlersRef = useRef<Record<string, AgentToolHandler> | null>(null)
+  if (!registryHandlersRef.current) {
+    registryHandlersRef.current = buildPurePeopleHandlers(() => toolContextRef.current)
+  }
+  const exposedHandlers = useMemo(
+    () =>
+      Object.fromEntries(
+        EXPOSED_TOOL_NAMES.map(name => [
+          name,
+          async (invoke: Parameters<AgentToolHandler>[0]) =>
+            registryHandlersRef.current![name]!(invoke),
+        ]),
+      ),
+    [],
+  )
   usePlatformAgentTools({
     // Standalone Vite has no shell to register with; skip the handshake.
     ready: !isStandaloneDevMode(),
-    tools: PUREPEOPLE_AGENT_TOOL_NAMES,
+    tools: EXPOSED_TOOL_NAMES,
     logLabel: PUREPEOPLE_AGENT_LOG_LABEL,
     errorType: AgentPeopleToolError,
-    handlers: {
-      createCustomer: async invoke => saveCustomerHandler(toolContextRef.current, invoke.arguments ?? {}, 'create'),
-      updateCustomer: async invoke => saveCustomerHandler(toolContextRef.current, invoke.arguments ?? {}, 'update'),
-      listCustomers: async invoke => listCustomersHandler(toolContextRef.current, invoke.arguments ?? {}),
-      listContacts: async invoke =>
-        listContactsHandler(toolContextRef.current, invoke.arguments ?? {}),
-      getContact: async invoke =>
-        getContactHandler(toolContextRef.current, invoke.arguments ?? {}),
-      prepareProfilePhotoResearch: async invoke =>
-        prepareProfilePhotoResearchHandler(toolContextRef.current, invoke.arguments ?? {}),
-      upsertContact: async invoke =>
-        upsertContactHandler(toolContextRef.current, invoke.arguments ?? {}),
-      mergeContacts: async invoke =>
-        mergeContactsHandler(toolContextRef.current, invoke.arguments ?? {}),
-      listOrgs: async invoke =>
-        listOrgsHandler(toolContextRef.current, invoke.arguments ?? {}),
-      getOrg: async invoke =>
-        getOrgHandler(toolContextRef.current, invoke.arguments ?? {}),
-      upsertOrg: async invoke =>
-        upsertOrgHandler(toolContextRef.current, invoke.arguments ?? {}),
-      listLists: async () => listListsHandler(toolContextRef.current),
-      createList: async invoke =>
-        createListHandler(toolContextRef.current, invoke.arguments ?? {}),
-      renameList: async invoke =>
-        renameListHandler(toolContextRef.current, invoke.arguments ?? {}),
-      workListInOutreach: async invoke =>
-        workListInOutreachHandler(toolContextRef.current, invoke.arguments ?? {}),
-      deleteList: async invoke =>
-        deleteListHandler(toolContextRef.current, invoke.arguments ?? {}),
-      addToList: async invoke =>
-        addToListHandler(toolContextRef.current, invoke.arguments ?? {}),
-      removeFromList: async invoke =>
-        removeFromListHandler(toolContextRef.current, invoke.arguments ?? {}),
-      getEventBoard: async invoke =>
-        getEventBoardHandler(toolContextRef.current, invoke.arguments ?? {}),
-      setEventPrep: async invoke =>
-        setEventPrepHandler(toolContextRef.current, invoke.arguments ?? {}),
-      getPersonNetwork: async invoke =>
-        getPersonNetworkHandler(toolContextRef.current, invoke.arguments ?? {}),
-    },
+    handlers: exposedHandlers,
   })
 
   // ---- selection + derived collections -------------------------------

@@ -26,8 +26,287 @@
     "agents": {
       "tools": [
         {
-        "name": "listContacts",
-        "risk": "read",
+          "name": "fn_directoryBriefing",
+          "risk": "read",
+          "description": "Compile a single-call executive briefing of the PurePeople directory and CRM pipeline: contact/org/list counts, full list roster, tracked customer status & due-date buckets (overdue, due today, upcoming, undated), top ranked contacts, top organisations with computed people counts, staleness metrics, and hygiene flags (duplicate clusters, unlinked org domains). Optionally filter to one list or search query.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "Optional search substring to scope contacts, organisations, and customer follow-ups."
+              },
+              "list": {
+                "type": "string",
+                "description": "Optional list name or id to focus the briefing on one curated collection."
+              },
+              "today": {
+                "type": "string",
+                "description": "Optional YYYY-MM-DD reference date for customer follow-up due buckets (defaults to local today)."
+              },
+              "topLimit": {
+                "type": "number",
+                "description": "Maximum top contacts and top organisations to include (default 10, max 50)."
+              },
+              "staleDays": {
+                "type": "number",
+                "description": "Days since lastSeenAt after which a contact counts as stale (default 180)."
+              }
+            },
+            "additionalProperties": false
+          },
+          "requiresApproval": false
+        },
+        {
+          "name": "fn_personRelationshipDossier",
+          "risk": "read",
+          "description": "Assemble a complete 360-degree dossier for one person in a single call: full sanitized contact record (including locked fields, sources, and retained alternatives), acquaintance level, list memberships, linked organisation & colleagues, CRM customer profile & due status, per-board event prep, 1- and 2-hop encounter network with introduction paths, and an optional profile-photo research brief.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "idOrEmail": {
+                "type": "string",
+                "description": "Contact id, any known email address, or exact unique full name."
+              },
+              "networkDepth": {
+                "type": "integer",
+                "enum": [
+                  1,
+                  2
+                ],
+                "description": "1 = direct encounter ties only; 2 (default) = include 2-hop introductions."
+              },
+              "eventList": {
+                "type": "string",
+                "description": "Optional event board list name or id to scope network connections (do not combine with eventQuery)."
+              },
+              "eventQuery": {
+                "type": "string",
+                "description": "Optional event board search query to scope network connections (do not combine with eventList)."
+              },
+              "today": {
+                "type": "string",
+                "description": "Optional YYYY-MM-DD reference date for customer follow-up status."
+              },
+              "includePhotoPlan": {
+                "type": "string",
+                "enum": [
+                  "light",
+                  "comprehensive"
+                ],
+                "description": "Optional profile-photo research mode to embed an identity-grounded photo research brief without extra tool calls."
+              }
+            },
+            "required": [
+              "idOrEmail"
+            ],
+            "additionalProperties": false
+          },
+          "requiresApproval": false
+        },
+        {
+          "name": "fn_orgAndEventBriefing",
+          "risk": "read",
+          "description": "Prepare a rich preparation briefing for either one organisation (pass org) or one event board (pass list or query — supply exactly one). In org mode, returns full org details, linked people with acquaintance/customer status, unlinked email-domain matches, and top external encounter ties. In event mode, returns starred targets, already-met people, known vs new breakdown, on-board ties, and warm introduction paths grounded in recorded encounters.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "org": {
+                "type": "string",
+                "description": "Organisation id, name, or alias for an organisation briefing (mutually exclusive with list and query)."
+              },
+              "list": {
+                "type": "string",
+                "description": "List name or id for an event board briefing (mutually exclusive with org and query)."
+              },
+              "query": {
+                "type": "string",
+                "description": "Search query (e.g. event name or tag) for an event board briefing (mutually exclusive with org and list)."
+              },
+              "today": {
+                "type": "string",
+                "description": "Optional YYYY-MM-DD reference date for customer due-date status."
+              },
+              "maxPeople": {
+                "type": "number",
+                "description": "Maximum people entries to return in detail (default 50, max 200)."
+              }
+            },
+            "additionalProperties": false
+          },
+          "requiresApproval": false
+        },
+        {
+          "name": "fn_duplicateAndHygieneAudit",
+          "risk": "read",
+          "description": "Audit PurePeople data quality in one read-only scan: detect probable duplicate contact clusters (by normalized full name, shared phone, shared profile URL, or same corporate domain + similar name) with recommended survivor IDs, find unlinked email-domain-to-organisation matches, list frequent contact org names lacking an organisation record, surface high-interaction contacts missing metadata, and flag overdue or undated customer follow-ups. Never modifies or merges records.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "list": {
+                "type": "string",
+                "description": "Optional list name or id to scope the audit."
+              },
+              "query": {
+                "type": "string",
+                "description": "Optional search substring to scope the audit."
+              },
+              "today": {
+                "type": "string",
+                "description": "Optional YYYY-MM-DD reference date for customer follow-up checks."
+              },
+              "maxItems": {
+                "type": "number",
+                "description": "Maximum entries returned per hygiene section (default 25, max 100)."
+              }
+            },
+            "additionalProperties": false
+          },
+          "requiresApproval": false
+        },
+        {
+          "name": "fn_batchCurateDirectory",
+          "risk": "write",
+          "description": "Apply a coordinated curation batch in one atomic store update (with optional dryRun preview): upsert organisations, upsert contacts (locking curated fields and filing onto lists), add existing contacts to lists, create or update customer follow-up profiles, and set per-board event prep. Validation errors abort the whole batch with zero partial writes. Never deletes lists, removes list members, or merges contacts.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "orgs": {
+                "type": "array",
+                "description": "Organisations to create or update (same locked-field semantics as upsertOrg).",
+                "items": {
+                  "type": "object",
+                  "description": "Org patch: required name; optional rename, industry, owner, status, city, country, notes, avatarUrl, aliases, phones, domains, tags, links.",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                }
+              },
+              "contacts": {
+                "type": "array",
+                "description": "Contacts to create or update (same locked-field semantics as upsertContact).",
+                "items": {
+                  "type": "object",
+                  "description": "Contact patch: required email; optional name, org, title, phones, notes, tags, addEmails, avatarUrl, links, status, topics, channels, lists.",
+                  "properties": {
+                    "email": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "email"
+                  ]
+                }
+              },
+              "listAdditions": {
+                "type": "array",
+                "description": "Batch list additions (creates a list if new; unknown addresses are reported, never invented).",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "list": {
+                      "type": "string"
+                    },
+                    "emails": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "list",
+                    "emails"
+                  ]
+                }
+              },
+              "customerUpdates": {
+                "type": "array",
+                "description": "Customer profile creations or updates for existing contacts (mode defaults to \"upsert\").",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "contactIdOrEmail": {
+                      "type": "string"
+                    },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "create",
+                        "update",
+                        "upsert"
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "Lead",
+                        "Customer",
+                        "Inactive"
+                      ]
+                    },
+                    "notes": {
+                      "type": "string"
+                    },
+                    "nextAction": {
+                      "type": "string"
+                    },
+                    "dueDate": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "contactIdOrEmail"
+                  ]
+                }
+              },
+              "eventPreps": {
+                "type": "array",
+                "description": "Event board preparation updates (each entry must specify exactly one of list or query, plus contact and at least one of meet/note/metAt).",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "list": {
+                      "type": "string"
+                    },
+                    "query": {
+                      "type": "string"
+                    },
+                    "contact": {
+                      "type": "string"
+                    },
+                    "meet": {
+                      "type": "boolean"
+                    },
+                    "note": {
+                      "type": "string"
+                    },
+                    "metAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "contact"
+                  ]
+                }
+              },
+              "dryRun": {
+                "type": "boolean",
+                "description": "When true, validates the entire batch and returns the planned receipt without mutating the store."
+              }
+            },
+            "additionalProperties": false
+          },
+          "requiresApproval": true
+        },
+        {
+          "name": "listContacts",
+          "risk": "read",
           "description": "Search/rank people, optionally within one list. Ranked by interaction weight then recency. Every result reports which lists exist, so you can offer them by name.",
           "inputSchema": {
             "type": "object",
@@ -45,11 +324,12 @@
                 "description": "Only people on this list (by list name or id). Omit for everyone. Unknown names are refused with the list of lists."
               }
             }
-          }
+          },
+          "requiresApproval": false
         },
         {
-        "name": "getContact",
-        "risk": "read",
+          "name": "getContact",
+          "risk": "read",
           "description": "Read one person's full record — every known email address, organisation, role, phones, notes, tags, and the provenance of where the suite has seen them.",
           "inputSchema": {
             "type": "object",
@@ -62,31 +342,12 @@
             "required": [
               "idOrEmail"
             ]
-          }
-        },
-        {
-          "name": "prepareProfilePhotoResearch",
-          "risk": "read",
-          "description": "Prepare an identity-grounded profile-photo research brief for one person. This tool makes no network or model calls. Use light mode during ordinary enrichment; use comprehensive mode only when the user explicitly asks for deeper photo research or uses the profile's Find photo button. After reading the brief, do all web research in the current assistant drawer and save only a verified portrait with upsertContact.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "contact": {
-                "type": "string",
-                "description": "The contact id or any known email address."
-              },
-              "mode": {
-                "type": "string",
-                "enum": ["light", "comprehensive"],
-                "description": "Light permits at most two targeted lookups. Comprehensive uses the full ranked source pipeline. Defaults to comprehensive."
-              }
-            },
-            "required": ["contact"],
-            "additionalProperties": false
-          }
+          },
+          "requiresApproval": false
         },
         {
           "name": "upsertContact",
+          "risk": "write",
           "description": "Create a contact or set fields on an existing one (matched by any known email). Fields you set are LOCKED: automatic feeds from other apps fill gaps but never overwrite them. Use this to record organisation, role, phones, notes, tags, links (LinkedIn, homepage, social media), or extra addresses the user tells you about. During research or enrichment, populate a missing avatarUrl only after matching the person by name plus organisation, role, email domain, or an existing profile link. Pass lists to file the person onto a named list (creating it if new).",
           "inputSchema": {
             "type": "object",
@@ -179,12 +440,12 @@
             "required": [
               "email"
             ]
-          }
+          },
+          "requiresApproval": true
         },
         {
           "name": "mergeContacts",
           "risk": "destructive",
-          "requiresApproval": true,
           "description": "Consolidate two existing people by stable ID. Keeps survivor identity and primary values, retaining differing details as alternatives. Saves the full survivor before deleting the absorbed record. Retrying the same IDs safely resumes an interrupted merge. Replies with the survivor's summary (id, name, emails, set fields, alternatives, lists, hasNotes) and absorbedId; call getContact for the full record.",
           "inputSchema": {
             "type": "object",
@@ -203,456 +464,88 @@
               "absorbedId"
             ],
             "additionalProperties": false
-          }
+          },
+          "requiresApproval": true
         },
         {
-        "name": "listOrgs",
-        "risk": "read",
-          "description": "Search/rank organisations. Each result includes peopleCount — the computed link to contacts (org-name/alias match or email-domain match).",
+          "name": "discoverAppTools",
+          "risk": "read",
+          "requiresApproval": false,
+          "description": "Discover PurePeople's extended specialist tools (17 tools across customers, enrichment, events, lists, network, orgs) and composite functions (5 workflows). Prefer calling exposed composite functions and core tools first; use discoverAppTools when an edge case needs a specialist tool, then call it via callExtendedReadTool (for read-only tools) or callExtendedTool (for mutating tools).",
           "inputSchema": {
             "type": "object",
             "properties": {
               "query": {
                 "type": "string",
-                "description": "Substring over name, aliases, industry, place, owner, tags, domains."
+                "description": "Optional keywords describing the capability you need (e.g. \"customers\", \"enrichment\", \"events\", \"lists\", \"network\")."
               },
-              "limit": {
-                "type": "number"
+              "category": {
+                "type": "string",
+                "description": "Optional category filter (customers, enrichment, events, lists, network, orgs, or \"all\")."
+              },
+              "names": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Optional exact tool names to fetch full JSON input schemas for."
+              },
+              "includeFunctions": {
+                "type": "boolean",
+                "description": "Include already-exposed composite functions and core tools in the listing (default false: searches extended tools first)."
               }
             }
           }
         },
         {
-        "name": "getOrg",
-        "risk": "read",
-          "description": "One full organisation record plus the linked people (id, name, title).",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "idOrName": {
-                "type": "string",
-                "description": "Org id, name, or alias."
-              }
-            },
-            "required": [
-              "idOrName"
-            ]
-          }
-        },
-        {
-          "name": "upsertOrg",
-          "description": "Create an organisation or set fields on an existing one (matched by name or alias). Fields you set are LOCKED against imports. Set domains to auto-link people by email domain; aliases to unify alternate spellings; rename to change the display name.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string",
-                "description": "Existing org id/name/alias to update, or a new org's name."
-              },
-              "rename": {
-                "type": "string",
-                "description": "New display name (identity stays)."
-              },
-              "industry": {
-                "type": "string"
-              },
-              "owner": {
-                "type": "string",
-                "description": "Who owns the relationship."
-              },
-              "status": {
-                "type": "string",
-                "description": "CRM-style status."
-              },
-              "city": {
-                "type": "string"
-              },
-              "country": {
-                "type": "string"
-              },
-              "notes": {
-                "type": "string"
-              },
-              "avatarUrl": {
-                "type": "string",
-                "description": "Direct, public logo URL (https or data:image), preferably from the organisation's verified official or brand site rather than a search thumbnail or expiring proxy URL."
-              },
-              "aliases": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "description": "Alternate names, e.g. [\"APA\"]."
-              },
-              "phones": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "domains": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "description": "Email domains that link people, e.g. [\"organization.example\"]."
-              },
-              "tags": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              },
-              "links": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "label": {
-                      "type": "string"
-                    },
-                    "url": {
-                      "type": "string"
-                    }
-                  },
-                  "required": [
-                    "url"
-                  ]
-                },
-                "description": "Labeled links (Homepage, LinkedIn). Replaces the list."
-              }
-            },
-            "required": [
-              "name"
-            ]
-          }
-        },
-        {
-        "name": "listLists",
-        "risk": "read",
-          "description": "Every list in PurePeople with how many people it holds. Lists are curated collections the user opens and works through (\"publisher.example contacts\", \"investors\") — unlike tags, a list can be empty and is named independently of the people on it. Read this before acting on a list by name.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {},
-            "required": []
-          }
-        },
-        {
-          "name": "createList",
-          "description": "Create an empty list. Use when the user wants a collection to start filling later; adding people to a list that does not exist yet is better done with addToList, which creates it.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string",
-                "description": "Name of the list, as the user would say it, e.g. \"publisher.example contacts\"."
-              }
-            },
-            "required": [
-              "name"
-            ]
-          }
-        },
-        {
-          "name": "renameList",
-          "description": "Rename a list. Membership is held by list id, so this changes no one’s contact record.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "list": {
-                "type": "string",
-                "description": "The list to rename, by its current name or id."
-              },
-              "name": {
-                "type": "string",
-                "description": "The new name."
-              }
-            },
-            "required": [
-              "list",
-              "name"
-            ]
-          }
-        },
-        {
-          "name": "workListInOutreach",
-          "description": "Open a list in PureOutreach, which brings its people into its open campaign to be researched and written to one at a time. Nothing changes in PurePeople and nothing is sent. By the list’s name or id; an unknown name is refused with the names there are.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "list": { "type": "string", "description": "The list, by its name or id." }
-            },
-            "required": ["list"]
-          },
+          "name": "callExtendedReadTool",
+          "risk": "read",
           "requiresApproval": false,
-          "risk": "write"
+          "description": "Call one of PurePeople's read-only extended specialist tools discovered via discoverAppTools (categories: customers, enrichment, events, lists, network, orgs). Strictly refuses mutating, destructive, external, or release tools.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "tool": {
+                "type": "string",
+                "description": "Exact name of a read-only extended tool from discoverAppTools."
+              },
+              "arguments": {
+                "type": "object",
+                "description": "Arguments object matching the tool’s inputSchema."
+              }
+            },
+            "required": [
+              "tool"
+            ]
+          }
         },
         {
-        "name": "deleteList",
-        "risk": "destructive",
-          "description": "Delete a list. The people who were on it are NOT deleted — only the collection is. Ask the user before calling this; it cannot be undone from here.",
+          "name": "callExtendedTool",
+          "risk": "write",
           "requiresApproval": true,
+          "riskWhen": {
+            "confirmDestructive": "destructive"
+          },
+          "description": "Call one of PurePeople's mutating extended specialist tools discovered via discoverAppTools (categories: customers, enrichment, events, lists, network, orgs). For destructive tools, set confirmDestructive: true after checking with the user. Strictly refuses read-only tools (use callExtendedReadTool), external tools, permanent-delete tools, and release tools.",
           "inputSchema": {
             "type": "object",
             "properties": {
-              "list": {
+              "tool": {
                 "type": "string",
-                "description": "The list to delete, by name or id."
+                "description": "Exact name of a mutating extended tool from discoverAppTools."
               },
-              "name": {
-                "type": "string",
-                "description": "The list’s exact current name, repeated as confirmation. Deletion is refused if it does not match."
+              "arguments": {
+                "type": "object",
+                "description": "Arguments object matching the tool’s inputSchema."
+              },
+              "confirmDestructive": {
+                "type": "boolean",
+                "description": "Required (true) when calling an extended tool marked risk: \"destructive\"."
               }
             },
             "required": [
-              "list",
-              "name"
+              "tool"
             ]
-          }
-        },
-        {
-          "name": "addToList",
-          "description": "Add people to a list, creating the list if that name is new. Only adds — never removes anyone already on it.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "list": {
-                "type": "string",
-                "description": "The list to add to, by name or id. A new name creates the list."
-              },
-              "emails": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "description": "Email addresses of the people, as PurePeople knows them. Unknown addresses are reported back, not created."
-              }
-            },
-            "required": [
-              "list",
-              "emails"
-            ]
-          }
-        },
-        {
-        "name": "removeFromList",
-        "risk": "destructive",
-          "description": "Take people off a list. They stay in PurePeople; only their membership of this list ends. Removing people is the user’s call — do it when asked, not as tidying.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "list": {
-                "type": "string",
-                "description": "The list to remove them from, by name or id."
-              },
-              "emails": {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                },
-                "description": "Email addresses of the people, as PurePeople knows them. Unknown addresses are reported back, not created."
-              }
-            },
-            "required": [
-              "list",
-              "emails"
-            ]
-          }
-        },
-        {
-          "name": "getEventBoard",
-          "risk": "read",
-          "description": "Everyone on an event board (a list, or a search such as an event name) with what helps prepare to meet them: role and org, how the user knows them (seen in Mail, met in Calendar, or new), recent context, topics, whether they are starred to meet, the user's note for this event, when they were met there, and who on the board they share threads with. Read this before briefing the user on an event.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "list": {
-                "type": "string",
-                "description": "A list name or id (give list or query)."
-              },
-              "query": {
-                "type": "string",
-                "description": "A search instead of a list, e.g. an event name or tag."
-              }
-            },
-            "required": []
-          }
-        },
-        {
-          "name": "setEventPrep",
-          "description": "For one person on one event board: star them to meet (meet: true/false), set the note for this event (note; empty clears it), or record the day they were met (metAt: YYYY-MM-DD, empty clears). Prep belongs to that board only. Only do this when the user asks.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "list": {
-                "type": "string",
-                "description": "A list name or id (give list or query)."
-              },
-              "query": {
-                "type": "string",
-                "description": "A search instead of a list, e.g. an event name or tag."
-              },
-              "contact": {
-                "type": "string",
-                "description": "The person's id or email (from getEventBoard)."
-              },
-              "meet": {
-                "type": "boolean"
-              },
-              "note": {
-                "type": "string"
-              },
-              "metAt": {
-                "type": "string",
-                "description": "YYYY-MM-DD, or empty to clear."
-              }
-            },
-            "required": [
-              "contact"
-            ]
-          }
-        },
-        {
-          "name": "getPersonNetwork",
-          "risk": "read",
-          "description": "Who a person shares email threads and meetings with (one or two steps out), how many they share and the latest subjects, and the path to each, e.g. to suggest who could introduce the user. Optionally limited to the people on an event board (list or query). Connections exist only where Mail and Calendar have reported shared threads and meetings.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "contact": {
-                "type": "string",
-                "description": "The person's id or email."
-              },
-              "depth": {
-                "type": "integer",
-                "enum": [
-                  1,
-                  2
-                ],
-                "description": "1 = direct ties only; 2 (default) = also the people they know."
-              },
-              "list": {
-                "type": "string",
-                "description": "A list name or id (give list or query)."
-              },
-              "query": {
-                "type": "string",
-                "description": "A search instead of a list, e.g. an event name or tag."
-              }
-            },
-            "required": [
-              "contact"
-            ]
-          }
-        },
-        {
-          "name": "createCustomer",
-          "description": "Start tracking an existing contact; creates only its customer profile, never another person. Use upsertContact first for a new person. Call listContacts/getContact first. Uses the same records and validation as Customers. Imported free-text contact status is separate.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "contactId": {
-                "type": "string",
-                "description": "Exact existing contact ID from listContacts. Never invent an ID."
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "Lead",
-                  "Customer",
-                  "Inactive"
-                ]
-              },
-              "notes": {
-                "type": "string",
-                "description": "Relationship notes; replaces these notes only, separate from contact notes."
-              },
-              "nextAction": {
-                "type": "string"
-              },
-              "dueDate": {
-                "type": "string",
-                "description": "Real YYYY-MM-DD calendar date, or empty to clear."
-              }
-            },
-            "required": [
-              "contactId",
-              "status"
-            ],
-            "additionalProperties": false
-          }
-        },
-        {
-          "name": "updateCustomer",
-          "description": "Edit an existing customer profile; omitted fields are preserved. Call listContacts/getContact first. Uses the same records and validation as Customers. Imported free-text contact status is separate.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "contactId": {
-                "type": "string",
-                "description": "Exact existing contact ID from listContacts. Never invent an ID."
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "Lead",
-                  "Customer",
-                  "Inactive"
-                ]
-              },
-              "notes": {
-                "type": "string",
-                "description": "Relationship notes; replaces these notes only, separate from contact notes."
-              },
-              "nextAction": {
-                "type": "string"
-              },
-              "dueDate": {
-                "type": "string",
-                "description": "Real YYYY-MM-DD calendar date, or empty to clear."
-              }
-            },
-            "required": [
-              "contactId"
-            ],
-            "additionalProperties": false
-          }
-        },
-        {
-          "name": "listCustomers",
-          "risk": "read",
-          "description": "List tracked contacts with their customer profiles, using the Customers view search, filters and due-date ordering. Untracked contacts are excluded. Call listContacts to find people to enrol. Undated contacts match All dates or No due date only.",
-          "inputSchema": {
-            "type": "object",
-            "properties": {
-              "query": {
-                "type": "string"
-              },
-              "status": {
-                "type": "string",
-                "enum": [
-                  "All statuses",
-                  "Lead",
-                  "Customer",
-                  "Inactive"
-                ]
-              },
-              "due": {
-                "type": "string",
-                "enum": [
-                  "All dates",
-                  "Overdue",
-                  "Due today",
-                  "Upcoming",
-                  "No due date"
-                ]
-              },
-              "today": {
-                "type": "string",
-                "description": "Optional YYYY-MM-DD reference date; defaults to the local calendar day."
-              }
-            },
-            "additionalProperties": false
           }
         }
       ]

@@ -159,6 +159,26 @@ Threads with more than 40 people are ignored as mass mailings. When a
 person has no connections, say that nothing has been recorded yet;
 never infer ties from a shared organisation or a guess.
 
+## Operations Architecture (3-Tier Exposure)
+
+PurePeople uses the shared Pure* App Functions architecture (`function` vs atomic `tool` + 3-tier exposure):
+
+1. **Composite App Functions (`fn_*`, always exposed — prefer these first for multi-step workflows):**
+   - `fn_directoryBriefing {query?, list?, today?, topLimit?, staleDays?}` — one-call overview of contacts, organisations (with computed `peopleCount`), full list roster, customer follow-up pipeline (`overdue`, `dueToday`, `upcoming`, `noDueDate`), staleness, and hygiene signals.
+   - `fn_personRelationshipDossier {idOrEmail, networkDepth?, eventList? | eventQuery?, today?, includePhotoPlan?}` — 360-degree dossier for one person: full sanitized contact record, acquaintance level, lists, linked organisation + colleagues, customer profile & due status, per-board event prep, 1- and 2-hop encounter network with introduction paths, and an optional photo research plan.
+   - `fn_orgAndEventBriefing {org | list | query, today?, maxPeople?}` — rich preparation briefing for either one organisation (linked people, customer summary, unlinked domain matches, external encounter bridges) or one event board (starred targets, already-met people, on-board ties, warm intro paths).
+   - `fn_duplicateAndHygieneAudit {list?, query?, today?, maxItems?}` — read-only data quality scan detecting probable duplicate contact clusters (with recommended `survivorId`), unlinked org domain matches, unmodeled org names, high-interaction enrichment gaps, and overdue/undated customer follow-ups. Never mutates or merges records.
+   - `fn_batchCurateDirectory {orgs?, contacts?, listAdditions?, customerUpdates?, eventPreps?, dryRun?}` — atomically applies a coordinated curation batch in one store commit with optional `dryRun: true` preview and zero partial writes on error. Never deletes lists, removes list members, or merges contacts.
+2. **Core Atomic Tools (always exposed directly):**
+   - `listContacts {query?, limit?, list?}` — search/rank people, optionally within one list.
+   - `getContact {idOrEmail}` — one full record.
+   - `upsertContact {email, name?, org?, title?, phones?, notes?, avatarUrl?, links?, tags?, status?, topics?, channels?, addEmails?, lists?}` — create or curate a record; set only what you know. `status` is a CRM-style relationship state ("In Progress"), `topics` are interests, `channels` are preferred contact channels.
+   - `mergeContacts {survivorId, absorbedId}` — consolidate two existing people by stable ID (destructive, requires approval).
+3. **Extended Specialist Tools (17 tools across `customers`, `enrichment`, `events`, `lists`, `network`, `orgs` — discoverable and callable on demand):**
+   - Call `discoverAppTools {query?, category?, names?, includeFunctions?}` to inspect available specialist tools and their full schemas.
+   - Call read-only specialist tools (`prepareProfilePhotoResearch`, `listOrgs`, `getOrg`, `listLists`, `getEventBoard`, `getPersonNetwork`, `listCustomers`) via `callExtendedReadTool {tool, arguments}`.
+   - Call mutating specialist tools (`upsertOrg`, `createList`, `renameList`, `workListInOutreach`, `addToList`, `setEventPrep`, `createCustomer`, `updateCustomer`) via `callExtendedTool {tool, arguments}`. For destructive extended tools (`deleteList`, `removeFromList`), pass `confirmDestructive: true` after confirming with the user.
+
 ## Tools
 
 `listContacts {query?, limit?, list?}` — search/rank people, optionally
@@ -169,6 +189,7 @@ channels?, addEmails?, lists?}` — create or curate a record; set only what you
 know. `status` is a CRM-style relationship state ("In Progress"),
 `topics` are interests, `channels` are preferred contact channels.
 
+Specialist tools (reached via `callExtendedReadTool` / `callExtendedTool` after `discoverAppTools`, or composed automatically through `fn_*` functions):
 `listOrgs {query?, limit?}` — search organisations (each result carries
 `peopleCount`). `getOrg {idOrName}` — full record plus linked people.
 `listLists {}`, `createList {name}`, `renameList {list, name}`,

@@ -13,6 +13,7 @@ vi.mock('../../lib/peopleBridge', () => ({ clearOpenRecordContext: async () => {
 import { PeopleShell } from '../PeopleShell'
 import { emptyPeopleStore, upsertContact } from '../../lib/contactsModel'
 import { listCustomers } from '../../lib/customers'
+import { PUREPEOPLE_ATOMIC_TOOL_SCHEMAS } from '../../agents/atomicToolSchemas'
 import manifest from '../../../plugin.json'
 
 it('registered customer tools and the reachable UI use the same records, validation and filters', async () => {
@@ -28,7 +29,15 @@ it('registered customer tools and the reachable UI use the same records, validat
   }
   const invoke = async (name: string, args: Record<string, unknown>) => {
     let result!: AgentToolHandlerResult
-    await act(async () => { result = await registration.current!.handlers[name]!({ arguments: args }) })
+    await act(async () => {
+      const direct = registration.current!.handlers[name]
+      if (direct) {
+        result = await direct({ arguments: args })
+      } else {
+        const meta = name === 'listCustomers' ? 'callExtendedReadTool' : 'callExtendedTool'
+        result = await registration.current!.handlers[meta]!({ arguments: { tool: name, arguments: args } })
+      }
+    })
     return JSON.parse(result.content)
   }
   const click = async (text: string) => {
@@ -38,9 +47,14 @@ it('registered customer tools and the reachable UI use the same records, validat
   }
   try {
     await act(async () => root.render(<Harness />))
+    for (const meta of ['discoverAppTools', 'callExtendedReadTool', 'callExtendedTool']) {
+      expect(registration.current!.tools).toContain(meta)
+      expect(manifest.app.agents.tools.some(tool => tool.name === meta)).toBe(true)
+    }
+    const discovered = await invoke('discoverAppTools', { category: 'customers' })
     for (const name of ['createCustomer', 'updateCustomer', 'listCustomers']) {
-      expect(registration.current!.tools).toContain(name)
-      expect(manifest.app.agents.tools.some(tool => tool.name === name)).toBe(true)
+      expect(PUREPEOPLE_ATOMIC_TOOL_SCHEMAS.some(tool => tool.name === name)).toBe(true)
+      expect(discovered.operations.some((op: { name: string }) => op.name === name)).toBe(true)
     }
     const person = [...host.querySelectorAll('div')].find(element => element.textContent === 'Taylor Example')!
     await act(async () => person.dispatchEvent(new MouseEvent('click', { bubbles: true })))
